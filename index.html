@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>【単純梁 中央一点集中荷重】強度計算書</title>
+<style>
+  :root{
+    --navy:#1f3a5f; --navy-d:#16293f; --accent:#2b6cb0;
+    --ok:#2f855a; --ng:#c53030; --bg:#eef1f5; --line:#d7dee6; --panelbg:#fbfcfe;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;background:var(--bg);margin:0;padding:20px;color:#25313d;}
+  .wrap{max-width:1280px;margin:0 auto;}
+  h1{font-size:21px;color:var(--navy-d);text-align:center;border-bottom:3px solid var(--navy);padding-bottom:10px;margin-bottom:4px;}
+  h1 .sub{display:block;font-size:15px;color:var(--accent);margin-top:4px;font-weight:600;}
+  h2.bar{font-size:14.5px;color:#fff;background:var(--navy);padding:7px 14px;border-radius:4px;margin:22px 0 0;}
+  .sheet{background:#fff;border:1px solid var(--line);border-top:none;border-radius:0 0 6px 6px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:0;align-items:start;}
+  .cols .left{padding:16px 20px 16px 4px;border-right:1px dashed var(--line);}
+  .cols .right{padding:16px 4px 16px 20px;background:var(--panelbg);}
+  @media (max-width:900px){.cols{grid-template-columns:1fr;} .cols .left{border-right:none;border-bottom:1px dashed var(--line);}}
+
+  /* 左：文章の計算書 */
+  .lead{font-size:13px;color:#4a5568;margin:2px 0 10px;}
+  .sub-head{font-weight:700;color:var(--navy-d);margin:16px 0 4px;font-size:14px;}
+  .sub-head::before{content:"・";color:var(--accent);}
+  .expl{font-size:13.5px;color:#374151;margin:4px 0;}
+  .calc-line{font-family:"Consolas","Yu Gothic",monospace;background:#f7f9fc;border-left:3px solid var(--accent);
+    padding:7px 12px;margin:5px 0 5px 8px;font-size:13.5px;color:#20303f;white-space:pre-wrap;line-height:1.65;}
+  .note-line{font-size:12px;color:#8996a3;font-style:italic;margin:2px 0 2px 8px;}
+  .diagram-wrap{text-align:center;margin:10px 0;padding:8px;background:#f7f9fc;border:1px solid var(--line);border-radius:6px;}
+  .diagram-label{font-size:12px;color:#4a5568;margin-top:4px;}
+  .final{margin:14px 0;padding:12px;border-radius:6px;font-size:14.5px;font-weight:700;text-align:center;}
+  .final-ok{background:#e6f4ea;color:var(--ok);border:1px solid #b7dfc4;}
+  .final-ng{background:#fbe9e9;color:var(--ng);border:1px solid #eeb9b9;}
+
+  /* 右：入力・計算結果パネル */
+  .rowline{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f5;font-size:13px;}
+  .rowline .lbl{color:#4a5568;font-weight:600;min-width:110px;}
+  .rowline .val{font-weight:700;color:#16293f;text-align:right;}
+  .rowline .val small{font-weight:400;color:#8996a3;margin-left:2px;}
+  .rowline input[type=text],.rowline input[type=number],.rowline select{
+    width:120px;padding:5px 7px;border:1px solid #c7d0da;border-radius:4px;font-size:13px;text-align:right;background:#fff;
+  }
+  .rowline select{text-align:left;width:150px;}
+  .panel-title{font-weight:700;font-size:13px;color:#fff;background:var(--accent);padding:5px 10px;border-radius:4px;margin:14px 0 4px;}
+  .panel-title:first-child{margin-top:0;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  .checkline{display:flex;align-items:center;gap:6px;font-size:12px;color:#4a5568;margin:4px 0;}
+  table.sect{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0;}
+  table.sect th,table.sect td{border:1px solid var(--line);padding:4px 6px;text-align:center;}
+  table.sect th{background:#eef2f7;color:#374151;}
+  .btn{background:var(--accent);color:#fff;border:none;padding:11px 34px;border-radius:5px;font-size:15px;cursor:pointer;font-weight:700;margin-top:16px;}
+  .btn:hover{background:var(--navy);}
+  .btnbar{text-align:center;}
+  .badge{display:inline-block;padding:2px 12px;border-radius:12px;font-weight:700;font-size:12px;color:#fff;}
+  .badge-ok{background:var(--ok);} .badge-ng{background:var(--ng);} .badge-mute{background:#9aa5b1;}
+  .splitcols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0;}
+  .splitcols .box{border:1px solid var(--line);border-radius:6px;padding:8px;background:#fff;}
+  .splitcols .box h4{margin:0 0 6px;font-size:12.5px;color:var(--navy-d);text-align:center;background:#eef2f7;padding:4px;border-radius:3px;}
+  .note{font-size:12px;color:#8996a3;margin-top:18px;line-height:1.7;padding:12px;background:#fff;border:1px solid var(--line);border-radius:6px;}
+  .formula-ref{font-family:"Consolas",monospace;font-size:13px;color:#20303f;background:#f7f9fc;border:1px solid var(--line);border-radius:4px;padding:6px 10px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .formula-ref .tag{font-size:11px;color:#8996a3;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>【単純梁 中央一点集中荷重】
+    <span class="sub" id="titleSub">C-100×50×20×1.6 の強度計算</span>
+  </h1>
+
+  <form id="calcForm" onsubmit="return false;">
+    <h2 class="bar">① 部材選択 ・ 設定値入力</h2>
+    <div class="sheet">
+      <div class="grid2">
+        <div>
+          <div class="checkline">
+            <label><input type="radio" name="memberMode" value="list" onclick="toggleMemberMode()" checked> リスト選択（部材をリストから選ぶ）</label>
+          </div>
+          <div id="listBox" style="margin:6px 0 10px 20px;">
+            <select name="memberSelect" id="memberSelect">
+              <option value="C-100x50x20x1.6" selected>C-100×50×20×1.6（ライトゲージ）</option>
+            </select>
+            <div class="note-line" style="margin-left:0;">※任意入力はMCSPシートで入力（→右側の「任意入力」を選択）</div>
+          </div>
+          <div class="checkline">
+            <label><input type="radio" name="memberMode" value="free" onclick="toggleMemberMode()"> 任意入力（断面性能を直接入力）</label>
+          </div>
+          <div id="freeBox" style="margin:6px 0 0 20px;">
+            <table class="sect">
+              <tr><th>商品記号</th><th>板厚(mm)</th><th>単位重量(kg/m)</th><th>断面積(mm²)</th></tr>
+              <tr>
+                <td><input type="text" name="freeName" value="C-100×50×20×1.6" style="width:120px;"></td>
+                <td><input type="number" step="any" name="thickness" value="1.6" style="width:70px;"></td>
+                <td><input type="number" step="any" name="weight" value="2.864" style="width:80px;"></td>
+                <td><input type="number" step="any" name="area" value="367.167" style="width:80px;"></td>
+              </tr>
+              <tr><th>Zx(mm³)</th><th>Zy(mm³)</th><th>Ix(mm⁴)</th><th>Iy(mm⁴)</th></tr>
+              <tr>
+                <td><input type="number" step="any" name="Zx" value="11700" style="width:80px;"></td>
+                <td><input type="number" step="any" name="Zy" value="4470" style="width:80px;"></td>
+                <td><input type="number" step="any" name="Ix" value="584000" style="width:80px;"></td>
+                <td><input type="number" step="any" name="Iy" value="140000" style="width:80px;"></td>
+              </tr>
+              <tr><th>ix(mm)</th><th>iy(mm)</th><th>短期F(N/mm²)</th><th>長期F(N/mm²)</th></tr>
+              <tr>
+                <td><input type="number" step="any" name="ix" value="39.9" style="width:70px;"></td>
+                <td><input type="number" step="any" name="iy" value="19.5" style="width:70px;"></td>
+                <td><input type="number" step="any" name="F_short" value="205" style="width:70px;"></td>
+                <td><input type="number" step="any" name="F_long" value="136" style="width:70px;"></td>
+              </tr>
+              <tr><th>E(N/mm²)</th><th>Zpx(mm³)</th><th>Zpy(mm³)</th><th>Zu／Zv</th></tr>
+              <tr>
+                <td><input type="number" step="any" name="E" value="205000" style="width:80px;"></td>
+                <td><input type="number" step="any" name="Zpx" value="13600" style="width:70px;"></td>
+                <td><input type="number" step="any" name="Zpy" value="6289" style="width:70px;"></td>
+                <td>
+                  <input type="number" step="any" name="Zu" value="0" style="width:34px;">/
+                  <input type="number" step="any" name="Zv" value="0" style="width:34px;">
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <div class="rowline"><span class="lbl">支持長さ L</span><span><input type="number" step="any" name="L" value="1000"> <small>mm</small></span></div>
+          <div class="rowline"><span class="lbl">集中荷重 P</span><span><input type="number" step="any" name="P" value="2000"> <small>N</small></span></div>
+          <div class="rowline"><span class="lbl">検討軸</span><span>
+            <select name="axis">
+              <option value="X" selected>X（強軸）</option>
+              <option value="Y">Y（弱軸）</option>
+            </select></span></div>
+          <div class="rowline"><span class="lbl">検討期間</span><span>
+            <select name="term">
+              <option value="短期" selected>短期</option>
+              <option value="長期">長期</option>
+            </select></span></div>
+          <div class="rowline"><span class="lbl">たわみ率 L/</span><span><input type="number" step="any" name="FREX" value="200"></span></div>
+          <div class="checkline"><input type="checkbox" name="frexOn" checked> たわみ判定を行う（ON）</div>
+          <div class="rowline"><span class="lbl">任意位置 x</span><span><input type="number" step="any" name="x" value="500"> <small>mm</small></span></div>
+          <div class="checkline"><input type="checkbox" name="xEnabled" checked> 任意位置xの計算を行う</div>
+        </div>
+      </div>
+      <div class="btnbar"><button type="button" class="btn" onclick="runCalc()">計 算 す る</button></div>
+    </div>
+  </form>
+
+  <div id="results"></div>
+
+  <div class="note">
+    ※ 元のExcel（.xlsm）は部材データベース（MCSP／PRT_Lシート）を外部の別ブックにリンクしていましたが、本ファイルには
+    C-100×50×20×1.6 の断面性能のみが実データとして含まれていたため、その1点をリスト選択のプリセットとして移植し、
+    それ以外の部材は「任意入力」で断面性能を直接入力する方式にしています。プリセットを増やす場合は
+    <code>memberPresets</code> オブジェクトに断面性能を追記してください。<br>
+    ※ ROUNDUP／ROUNDDOWNはExcelの丸め仕様（0から遠い方／近い方への切り捨て）に合わせて実装しています。<br>
+    ※ 本ツールはサーバー処理を使わず、JavaScriptのみで計算するHTML1ファイル構成です（SharePointの「埋め込み」Webパーツ等に貼り込み可能）。
+  </div>
+
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+ * Excel互換 ROUNDUP / ROUNDDOWN / ROUND
+ * ---------------------------------------------------------------- */
+function phpRound(num, digits) {
+  digits = digits || 0;
+  var mult = Math.pow(10, digits);
+  var v = num * mult;
+  var r = v >= 0 ? Math.round(v) : -Math.round(-v);
+  return r / mult;
+}
+function excelRoundup(num, digits) {
+  digits = digits || 0;
+  num = Number(num);
+  var mult = Math.pow(10, digits);
+  var val = phpRound(num * mult, 6); // 浮動小数点誤差を先に丸めて除去
+  var result = num >= 0 ? Math.ceil(val) : Math.floor(val);
+  return result / mult;
+}
+function excelRounddown(num, digits) {
+  digits = digits || 0;
+  num = Number(num);
+  var mult = Math.pow(10, digits);
+  var val = phpRound(num * mult, 6);
+  var result = num >= 0 ? Math.floor(val) : Math.ceil(val);
+  return result / mult;
+}
+function fnum(v, digits) {
+  digits = (digits === undefined) ? 2 : digits;
+  if (v === '' || v === null || v === undefined || (typeof v === 'number' && isNaN(v))) return '-';
+  var n = Number(v);
+  var fixed = n.toFixed(digits);
+  var parts = fixed.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.length > 1 ? parts.join('.') : parts[0];
+}
+function h(v) {
+  var d = document.createElement('div');
+  d.textContent = (v === null || v === undefined) ? '' : String(v);
+  return d.innerHTML;
+}
+function rad2deg(r) { return r * 180 / Math.PI; }
+
+/* ------------------------------------------------------------------
+ * 部材（断面性能）プリセット
+ * ---------------------------------------------------------------- */
+var memberPresets = {
+  'C-100x50x20x1.6': {
+    label: 'C-100×50×20×1.6',
+    thickness: 1.6,
+    weight: 2.864,
+    area: 367.167,
+    Zx: 11700, Zy: 4470,
+    Ix: 584000, Iy: 140000,
+    ix: 39.9, iy: 19.5,
+    F_short: 205, F_long: 136,
+    Zu: 0, Zv: 0,
+    E: 205000,
+    etc: 50, etc2: 100,
+    Zpx: 13600, Zpy: 6289
+  }
+};
+
+function badge(ok) {
+  if (ok === null || ok === undefined) return '<span class="badge badge-mute">-</span>';
+  return ok ? '<span class="badge badge-ok">OK</span>' : '<span class="badge badge-ng">NG</span>';
+}
+function cmp(ok) {
+  if (ok === null || ok === undefined) return '-';
+  return ok ? '≦' : '＞';
+}
+
+/* ------------------------------------------------------------------
+ * 図（SVGで再現）
+ * ---------------------------------------------------------------- */
+function diagramMain(L, P, x, xsctCHK) {
+  L = Number(L);
+  var xr = (x !== null && x !== undefined && L > 0) ? Math.max(0, Math.min(1, x / L)) : null;
+  var svg = '<svg viewBox="0 0 620 170" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">';
+  svg += '<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="4.5" refY="9" orient="auto"><path d="M0,0 L9,0 L4.5,9 z" fill="#c53030"/></marker></defs>';
+  svg += '<line x1="310" y1="18" x2="310" y2="68" stroke="#c53030" stroke-width="3" marker-end="url(#ar)"/>';
+  svg += '<text x="310" y="14" text-anchor="middle" font-size="14" fill="#c53030" font-weight="bold">P</text>';
+  if (xr !== null) {
+    var xpos = 70 + 480 * xr;
+    svg += '<line x1="' + xpos + '" y1="68" x2="' + xpos + '" y2="90" stroke="#2b6cb0" stroke-width="2" stroke-dasharray="4,3"/>';
+    svg += '<text x="' + xpos + '" y="104" text-anchor="middle" font-size="12" fill="#2b6cb0">x</text>';
+    svg += '<line x1="70" y1="120" x2="' + xpos + '" y2="120" stroke="#2b6cb0" stroke-width="1.4"/>';
+    svg += '<line x1="70" y1="115" x2="70" y2="125" stroke="#2b6cb0" stroke-width="1.4"/>';
+    svg += '<line x1="' + xpos + '" y1="115" x2="' + xpos + '" y2="125" stroke="#2b6cb0" stroke-width="1.4"/>';
+  }
+  svg += '<line x1="70" y1="68" x2="550" y2="68" stroke="#1f3a5f" stroke-width="6"/>';
+  svg += '<polygon points="70,68 56,96 84,96" fill="#1f3a5f"/>';
+  svg += '<polygon points="550,68 536,96 564,96" fill="#1f3a5f"/>';
+  svg += '<circle cx="543" cy="100" r="4.5" fill="#1f3a5f"/><circle cx="557" cy="100" r="4.5" fill="#1f3a5f"/>';
+  svg += '<line x1="46" y1="99" x2="94" y2="99" stroke="#1f3a5f" stroke-width="2"/>';
+  svg += '<line x1="528" y1="107" x2="576" y2="107" stroke="#1f3a5f" stroke-width="2"/>';
+  svg += '<text x="70" y="132" text-anchor="middle" font-size="12" fill="#374151">RA</text>';
+  svg += '<text x="550" y="132" text-anchor="middle" font-size="12" fill="#374151">RB</text>';
+  svg += '<line x1="70" y1="150" x2="550" y2="150" stroke="#8996a3" stroke-width="1"/>';
+  svg += '<line x1="70" y1="145" x2="70" y2="155" stroke="#8996a3" stroke-width="1"/>';
+  svg += '<line x1="550" y1="145" x2="550" y2="155" stroke="#8996a3" stroke-width="1"/>';
+  svg += '<text x="310" y="166" text-anchor="middle" font-size="12" fill="#4a5568">L</text>';
+  svg += '</svg>';
+  return svg;
+}
+function diagramMini(mode) {
+  var svg = '<svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" style="width:150px;height:auto;">';
+  svg += '<line x1="20" y1="30" x2="180" y2="30" stroke="#1f3a5f" stroke-width="4"/>';
+  svg += '<polygon points="20,30 10,48 30,48" fill="#1f3a5f"/>';
+  svg += '<polygon points="180,30 170,48 190,48" fill="#1f3a5f"/>';
+  if (mode === 'center') {
+    svg += '<line x1="100" y1="6" x2="100" y2="27" stroke="#c53030" stroke-width="2.5" marker-end="url(#arm)"/>';
+    svg += '<circle cx="100" cy="30" r="3" fill="#c53030"/>';
+  } else if (mode === 'left') {
+    svg += '<rect x="20" y="24" width="80" height="12" fill="#2b6cb0" opacity="0.18"/>';
+    svg += '<line x1="60" y1="6" x2="60" y2="27" stroke="#c53030" stroke-width="2" marker-end="url(#arm)"/>';
+    svg += '<text x="60" y="56" text-anchor="middle" font-size="9" fill="#2b6cb0">0≦x≦L/2</text>';
+  } else if (mode === 'right') {
+    svg += '<rect x="100" y="24" width="80" height="12" fill="#2b6cb0" opacity="0.18"/>';
+    svg += '<line x1="140" y1="6" x2="140" y2="27" stroke="#c53030" stroke-width="2" marker-end="url(#arm)"/>';
+    svg += '<text x="140" y="56" text-anchor="middle" font-size="9" fill="#2b6cb0">L/2≦x≦L</text>';
+  }
+  svg += '<defs><marker id="arm" markerWidth="7" markerHeight="7" refX="3.5" refY="7" orient="auto"><path d="M0,0 L7,0 L3.5,7 z" fill="#c53030"/></marker></defs>';
+  svg += '</svg>';
+  return svg;
+}
+
+/* ------------------------------------------------------------------
+ * UI: 部材選択モード切替
+ * ---------------------------------------------------------------- */
+function toggleMemberMode() {
+  var v = document.querySelector('input[name="memberMode"]:checked').value;
+  document.getElementById('listBox').style.display = (v === 'list') ? 'block' : 'none';
+  document.getElementById('freeBox').style.display = (v === 'free') ? 'block' : 'none';
+}
+window.addEventListener('DOMContentLoaded', toggleMemberMode);
+
+/* ------------------------------------------------------------------
+ * フォーム値取得
+ * ---------------------------------------------------------------- */
+function fval(name, def) {
+  var el = document.querySelector('[name="' + name + '"]');
+  if (!el) return def;
+  if (el.type === 'checkbox') return el.checked;
+  var v = el.value;
+  return (v === '' || v === null) ? def : v;
+}
+
+/* ------------------------------------------------------------------
+ * 計算本体（Excelのセル式をそのまま踏襲）
+ * ---------------------------------------------------------------- */
+function runCalc() {
+  var form = document.getElementById('calcForm');
+
+  var memberMode = form.querySelector('input[name="memberMode"]:checked').value;
+  var memberSelect = fval('memberSelect', 'C-100x50x20x1.6');
+
+  var m, prtName;
+  if (memberMode === 'list' && memberPresets[memberSelect]) {
+    m = memberPresets[memberSelect];
+    prtName = m.label;
+  } else {
+    m = {
+      label: fval('freeName', 'C-100×50×20×1.6'),
+      thickness: Number(fval('thickness', 1.6)),
+      weight: Number(fval('weight', 2.864)),
+      area: Number(fval('area', 367.167)),
+      Zx: Number(fval('Zx', 11700)), Zy: Number(fval('Zy', 4470)),
+      Ix: Number(fval('Ix', 584000)), Iy: Number(fval('Iy', 140000)),
+      ix: Number(fval('ix', 39.9)), iy: Number(fval('iy', 19.5)),
+      F_short: Number(fval('F_short', 205)), F_long: Number(fval('F_long', 136)),
+      Zu: Number(fval('Zu', 0)), Zv: Number(fval('Zv', 0)),
+      E: Number(fval('E', 205000)),
+      Zpx: Number(fval('Zpx', 13600)), Zpy: Number(fval('Zpy', 6289))
+    };
+    prtName = m.label;
+  }
+
+  var Zx = Number(m.Zx), Zy = Number(m.Zy);
+  var Ix = Number(m.Ix), Iy = Number(m.Iy);
+  var F_short = Number(m.F_short), F_long = Number(m.F_long);
+  var E = Number(m.E);
+
+  var axis = fval('axis', 'X');
+  var L = Number(fval('L', 1000));
+  var P = Number(fval('P', 2000));
+  var term = fval('term', '短期');
+  var FREX = Number(fval('FREX', 200));
+  var frexOn = fval('frexOn', false);
+  var x = Number(fval('x', 500));
+  var xEnabled = fval('xEnabled', false);
+
+  var Z = (axis === 'X') ? Zx : Zy;
+  var I = (axis === 'X') ? Ix : Iy;
+  var F = (term === '短期') ? F_short : F_long;
+  var ZLabel = (axis === 'X') ? 'Zx' : 'Zy';
+  var ILabel = (axis === 'X') ? 'Ix' : 'Iy';
+
+  var L2 = excelRoundup(L / 2, 2);
+  var R = excelRoundup(P / 2, 2);
+  var Mmax = excelRoundup(P * L / 4, 2);
+  var sigma_b = excelRoundup(Mmax / Z, 2);
+  var sigma_b_judge = (sigma_b <= F);
+
+  var delta_max = excelRoundup(P * Math.pow(L, 3) / (48 * E * I), 2);
+  var L_over_deltamax = (delta_max != 0) ? excelRounddown(L / delta_max, 0) : '-';
+  var delta_allow = (FREX != 0) ? excelRounddown(L / FREX, 2) : '-';
+  var delta_max_judge = frexOn ? (Math.abs(delta_max) <= L / FREX) : null;
+
+  var CHK1 = sigma_b_judge && (frexOn ? delta_max_judge : true);
+
+  var thetaA = P * Math.pow(L, 2) / (16 * E * I);
+  var thetaA_rad = excelRounddown(thetaA, 6);
+  var thetaA_deg = phpRound(rad2deg(thetaA), 4);
+
+  var xJudgeText = '-', xsctCHK = null;
+  var hasX = xEnabled;
+  if (hasX) {
+    xsctCHK = (x <= L / 2) ? 1 : 2;
+    xJudgeText = (xsctCHK === 1) ? 'x≦L/2' : 'L/2≦x';
+  }
+
+  var Mx1 = null, Mx2 = null, delta_x1 = null, delta_x2 = null;
+  var Mx = null, sigma_bx = null, delta_x = null, L_over_deltax = null;
+  var sigma_bx_judge = null, delta_x_judge = null;
+  var thetax1 = null, thetax2 = null, thetax = null, thetax_rad = null, thetax_deg = null;
+  var CHK2 = null;
+
+  if (hasX) {
+    if (xsctCHK === 1) {
+      Mx1 = excelRoundup(P * x / 2, 2);
+      delta_x1 = excelRoundup(P * x * (3 * Math.pow(L, 2) - 4 * Math.pow(x, 2)) / (48 * E * I), 2);
+      thetax1 = P * (Math.pow(L, 2) - 4 * Math.pow(x, 2)) / (16 * E * I);
+      Mx = Mx1; delta_x = delta_x1; thetax = thetax1;
+    } else {
+      var Lx = L - x;
+      Mx2 = excelRoundup(P * Lx / 2, 2);
+      delta_x2 = excelRoundup(P * Lx * (3 * Math.pow(L, 2) - 4 * Math.pow(Lx, 2)) / (48 * E * I), 2);
+      thetax2 = -P * (Math.pow(L, 2) - 4 * Math.pow(Lx, 2)) / (16 * E * I);
+      Mx = Mx2; delta_x = delta_x2; thetax = thetax2;
+    }
+    sigma_bx = excelRoundup(Mx / Z, 2);
+    sigma_bx_judge = (sigma_bx <= F);
+    L_over_deltax = (delta_x != 0) ? excelRounddown(L / delta_x, 0) : '-';
+    delta_x_judge = frexOn ? (Math.abs(delta_x) <= L / FREX) : null;
+    thetax_rad = excelRounddown(thetax, 6);
+    thetax_deg = phpRound(rad2deg(thetax), 4);
+    CHK2 = sigma_bx_judge && (frexOn ? delta_x_judge : true);
+  }
+
+  document.getElementById('titleSub').textContent = prtName + ' の強度計算';
+  renderResults({
+    m: m, prtName: prtName, memberMode: memberMode,
+    axis: axis, L: L, P: P, term: term, FREX: FREX, frexOn: frexOn, x: x, xEnabled: xEnabled,
+    Zx: Zx, Zy: Zy, Ix: Ix, Iy: Iy, F_short: F_short, F_long: F_long, E: E,
+    Z: Z, I: I, F: F, ZLabel: ZLabel, ILabel: ILabel,
+    L2: L2, R: R, Mmax: Mmax, sigma_b: sigma_b, sigma_b_judge: sigma_b_judge,
+    delta_max: delta_max, L_over_deltamax: L_over_deltamax, delta_allow: delta_allow, delta_max_judge: delta_max_judge,
+    CHK1: CHK1, thetaA_rad: thetaA_rad, thetaA_deg: thetaA_deg,
+    xJudgeText: xJudgeText, xsctCHK: xsctCHK, hasX: hasX,
+    Mx1: Mx1, Mx2: Mx2, delta_x1: delta_x1, delta_x2: delta_x2,
+    Mx: Mx, sigma_bx: sigma_bx, delta_x: delta_x, L_over_deltax: L_over_deltax,
+    sigma_bx_judge: sigma_bx_judge, delta_x_judge: delta_x_judge,
+    thetax_rad: thetax_rad, thetax_deg: thetax_deg, CHK2: CHK2
+  });
+
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ------------------------------------------------------------------
+ * 結果描画
+ * ---------------------------------------------------------------- */
+function renderResults(r) {
+  var m = r.m;
+  var html = '';
+
+  // ===== ② 荷重点の強度計算 =====
+  html += '<h2 class="bar">② ' + h(r.prtName) + ' の強度計算（荷重点）</h2>';
+  html += '<div class="sheet"><div class="cols">';
+
+  html += '<div class="left">';
+  html += '<div class="lead">支持長さL=' + fnum(r.L, 0) + 'mm　集中荷重P=' + fnum(r.P, 0) + 'N</div>';
+  html += '<div class="lead">' + r.ZLabel + '=' + fnum(r.Z) + 'mm³　' + r.ILabel + '=' + fnum(r.I) + 'mm⁴　E=' + fnum(r.E, 0) + 'N/mm²　F=' + fnum(r.F, 0) + 'N/mm²</div>';
+  html += '<div class="diagram-wrap">' + diagramMain(r.L, r.P) + '<div class="diagram-label">荷重モデル：単純梁 ／ 中央一点集中荷重</div></div>';
+  html += '<p class="expl">' + h(r.prtName) + 'にかかる荷重状態を上図の様な中央一点集中荷重と想定する。</p>';
+
+  html += '<div class="sub-head">集中荷重P</div>';
+  html += '<p class="expl">設定条件より、' + h(r.prtName) + 'にかかる集中荷重Pを求めると</p>';
+  html += '<div class="note-line">P ＝ -----※荷重Pの計算を検討条件に合わせて記述-----</div>';
+  html += '<div class="calc-line">　＝ ' + fnum(r.P, 0) + 'N</div>';
+
+  html += '<div class="sub-head">反力RA，RB</div>';
+  html += '<div class="calc-line">RA ＝ RB ＝ P／2 ＝ ' + fnum(r.P, 0) + 'N／2 ＝ ' + fnum(r.R) + 'N</div>';
+
+  html += '<div class="sub-head">モーメントMmax</div>';
+  html += '<div class="calc-line">Mmax ＝ PL／4 ＝ ' + fnum(r.P, 0) + 'N×' + fnum(r.L, 0) + 'mm／4 ＝ ' + fnum(r.Mmax) + 'N・mm</div>';
+
+  html += '<div class="sub-head">' + r.term + '曲げ応力度σb</div>';
+  html += '<div class="calc-line">σb ＝ Mmax／Z ＝ ' + fnum(r.Mmax) + 'N・mm／' + fnum(r.Z) + 'mm³ ＝ ' + fnum(r.sigma_b) + 'N/mm² ' + cmp(r.sigma_b_judge) + ' ' + fnum(r.F, 0) + 'N/mm²　' + (r.sigma_b_judge ? 'OK' : 'NG') + '</div>';
+
+  html += '<div class="sub-head">たわみδmax</div>';
+  html += '<div class="calc-line">δmax ＝ PL³／(48EI)\n　＝ ' + fnum(r.P, 0) + 'N×' + fnum(r.L, 0) + '³／(48×' + fnum(r.E, 0) + 'N/mm²×' + fnum(r.I) + 'mm⁴) ＝ ' + fnum(r.delta_max) + 'mm' +
+    (r.frexOn ? ' (1/' + r.L_over_deltamax + ' ' + cmp(r.delta_max_judge) + ' 1/' + fnum(r.FREX, 0) + ' ' + (r.delta_max_judge ? 'OK' : 'NG') + ')' : '') + '</div>';
+
+  html += '<div class="final ' + (r.CHK1 ? 'final-ok' : 'final-ng') + '">以上計算より、' + h(r.prtName) + 'は設定の条件において強度上問題' + (r.CHK1 ? '無い' : '有り、要再検討！') + '</div>';
+
+  html += '<div class="sub-head">たわみ角θA（－θB）</div>';
+  html += '<div class="calc-line">θA ＝ －θB ＝ PL²／(16EI)\n　＝ ' + fnum(r.P, 0) + 'N×(' + fnum(r.L, 0) + 'mm)²／(16×' + fnum(r.E, 0) + 'N/mm²×' + fnum(r.I) + 'mm⁴)\n　＝ ' + fnum(r.thetaA_rad, 6) + 'rad (' + fnum(r.thetaA_deg, 4) + '°)</div>';
+  html += '</div>'; // left
+
+  html += '<div class="right">';
+  html += '<div class="panel-title">荷重モデル</div>';
+  html += '<div class="rowline"><span class="lbl">形式</span><span class="val">単純梁</span></div>';
+  html += '<div class="rowline"><span class="lbl">荷重</span><span class="val">中央一点集中荷重</span></div>';
+
+  html += '<div class="panel-title">部材選択</div>';
+  html += '<div class="rowline"><span class="lbl">部材選択</span><span class="val">' + (r.memberMode === 'list' ? 'リスト選択' : '任意入力') + '</span></div>';
+  html += '<div class="rowline"><span class="lbl">部材種類</span><span class="val">ライトゲージ</span></div>';
+  html += '<div class="rowline"><span class="lbl">部材</span><span class="val">' + h(r.prtName) + '</span></div>';
+
+  html += '<div class="panel-title">断面性能</div>';
+  html += '<table class="sect">';
+  html += '<tr><th>商品記号</th><th>板厚</th><th>W</th><th>A</th></tr>';
+  html += '<tr><td>' + h(r.prtName) + '</td><td>' + fnum(m.thickness, 1) + '</td><td>' + fnum(m.weight, 3) + '</td><td>' + fnum(m.area, 3) + '</td></tr>';
+  html += '<tr><th>Zx</th><th>Zy</th><th>Ix</th><th>Iy</th></tr>';
+  html += '<tr><td>' + fnum(r.Zx) + '</td><td>' + fnum(r.Zy) + '</td><td>' + fnum(r.Ix) + '</td><td>' + fnum(r.Iy) + '</td></tr>';
+  html += '<tr><th>ix</th><th>iy</th><th>短期F</th><th>長期F</th></tr>';
+  html += '<tr><td>' + fnum(m.ix, 1) + '</td><td>' + fnum(m.iy, 1) + '</td><td>' + fnum(r.F_short, 0) + '</td><td>' + fnum(r.F_long, 0) + '</td></tr>';
+  html += '<tr><th>E</th><th colspan="3">N/mm²</th></tr>';
+  html += '<tr><td>' + fnum(r.E, 0) + '</td><td colspan="3">-</td></tr>';
+  html += '</table>';
+
+  html += '<div class="panel-title">設定値入力</div>';
+  html += '<div class="rowline"><span class="lbl">支持長さL</span><span class="val">' + fnum(r.L, 0) + ' <small>mm</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">L/2</span><span class="val">' + fnum(r.L2) + ' <small>mm</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">集中荷重P</span><span class="val">' + fnum(r.P, 0) + ' <small>N</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">検討軸</span><span class="val">' + h(r.axis) + '</span></div>';
+  html += '<div class="rowline"><span class="lbl">' + r.ZLabel + '</span><span class="val">' + fnum(r.Z) + ' <small>mm³</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">' + r.ILabel + '</span><span class="val">' + fnum(r.I) + ' <small>mm⁴</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">たわみ率</span><span class="val">' + fnum(r.FREX, 0) + ' <small>' + (r.frexOn ? 'ON' : 'OFF') + '</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">たわみ許容</span><span class="val">' + r.delta_allow + ' <small>mm</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">ヤング係数E</span><span class="val">' + fnum(r.E, 0) + ' <small>N/mm²</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">検討期間</span><span class="val">' + h(r.term) + '</span></div>';
+  html += '<div class="rowline"><span class="lbl">基準強度F</span><span class="val">' + fnum(r.F, 0) + ' <small>N/mm²</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">任意位置x</span><span class="val">' + (r.hasX ? fnum(r.x, 0) + ' mm' : '-') + '</span></div>';
+  html += '<div class="rowline"><span class="lbl">x位置判定</span><span class="val">' + r.xJudgeText + '</span></div>';
+
+  html += '<div class="panel-title">計算結果</div>';
+  html += '<div class="rowline"><span class="lbl">RA，RB</span><span class="val">' + fnum(r.R) + ' <small>N</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">Mmax</span><span class="val">' + fnum(r.Mmax) + ' <small>N・mm</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">σb</span><span class="val">' + fnum(r.sigma_b) + ' <small>N/mm²</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">σb判定</span><span class="val">' + cmp(r.sigma_b_judge) + ' ' + badge(r.sigma_b_judge) + '</span></div>';
+  html += '<div class="rowline"><span class="lbl">δmax</span><span class="val">' + fnum(r.delta_max) + ' <small>mm</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">L/δmax</span><span class="val">' + r.L_over_deltamax + '</span></div>';
+  html += '<div class="rowline"><span class="lbl">δmax判定</span><span class="val">' + (r.frexOn ? cmp(r.delta_max_judge) : '-') + ' ' + badge(r.delta_max_judge) + '</span></div>';
+  html += '<div class="rowline"><span class="lbl">_CHK1</span><span class="val">' + badge(r.CHK1) + '</span></div>';
+  html += '<div class="rowline"><span class="lbl">θA（－θB）</span><span class="val">' + fnum(r.thetaA_rad, 6) + ' <small>rad</small></span></div>';
+  html += '<div class="rowline"><span class="lbl">&nbsp;</span><span class="val">' + fnum(r.thetaA_deg, 4) + ' <small>°</small></span></div>';
+  html += '</div>'; // right
+  html += '</div></div>'; // cols / sheet
+
+  // ===== ③ 任意位置xの強度計算 =====
+  if (r.hasX) {
+    html += '<h2 class="bar">③ ' + h(r.prtName) + ' の強度計算（任意位置 x=' + fnum(r.x, 0) + 'mm ／ ' + r.xJudgeText + '）</h2>';
+    html += '<div class="sheet"><div class="cols">';
+
+    html += '<div class="left">';
+    html += '<div class="lead">支持長さL=' + fnum(r.L, 0) + 'mm　集中荷重P=' + fnum(r.P, 0) + 'N　x=' + fnum(r.x, 0) + 'mm</div>';
+    html += '<div class="lead">' + r.ZLabel + '=' + fnum(r.Z) + 'mm³　' + r.ILabel + '=' + fnum(r.I) + 'mm⁴　E=' + fnum(r.E, 0) + 'N/mm²　F=' + fnum(r.F, 0) + 'N/mm²</div>';
+    html += '<div class="diagram-wrap">' + diagramMain(r.L, r.P, r.x, r.xsctCHK) + '<div class="diagram-label">荷重モデル：単純梁 ／ 中央一点集中荷重（x位置を明示）</div></div>';
+    html += '<p class="expl">' + h(r.prtName) + 'にかかる荷重状態を上図の様な中央一点集中荷重と想定する。</p>';
+
+    html += '<div class="sub-head">集中荷重P</div>';
+    html += '<p class="expl">設定条件より、' + h(r.prtName) + 'にかかる集中荷重Pを求めると</p>';
+    html += '<div class="note-line">P ＝ -----※荷重Pの計算を検討条件に合わせて記述-----</div>';
+    html += '<div class="calc-line">　＝ ' + fnum(r.P, 0) + 'N</div>';
+
+    html += '<div class="sub-head">モーメントMx</div>';
+    if (r.xsctCHK === 1) {
+      html += '<div class="calc-line">Mx ＝ Px／2 ＝ ' + fnum(r.P, 0) + 'N×' + fnum(r.x, 0) + 'mm／2 ＝ ' + fnum(r.Mx1) + 'N・mm</div>';
+    } else {
+      html += '<div class="calc-line">Mx ＝ P(L－x)／2 ＝ ' + fnum(r.P, 0) + 'N×(' + fnum(r.L, 0) + 'mm－' + fnum(r.x, 0) + 'mm)／2 ＝ ' + fnum(r.Mx2) + 'N・mm</div>';
+    }
+
+    html += '<div class="sub-head">' + r.term + '曲げ応力度σbx</div>';
+    html += '<div class="calc-line">σbx ＝ Mx／Z ＝ ' + fnum(r.Mx) + 'N・mm／' + fnum(r.Z) + 'mm³ ＝ ' + fnum(r.sigma_bx) + 'N/mm² ' + cmp(r.sigma_bx_judge) + ' ' + fnum(r.F, 0) + 'N/mm²　' + (r.sigma_bx_judge ? 'OK' : 'NG') + '</div>';
+
+    html += '<div class="sub-head">たわみδx</div>';
+    if (r.xsctCHK === 1) {
+      html += '<div class="calc-line">δx ＝ Px(3L²－4x²)／(48EI)\n　＝ ' + fnum(r.P, 0) + 'N×' + fnum(r.x, 0) + 'mm×[3×(' + fnum(r.L, 0) + 'mm)²－4×（' + fnum(r.x, 0) + 'mm)²]\n　／(48×' + fnum(r.E, 0) + 'N/mm²×' + fnum(r.I) + 'mm⁴)\n　＝ ' + fnum(r.delta_x) + 'mm' +
+        (r.frexOn ? ' (1/' + r.L_over_deltax + ' ' + cmp(r.delta_x_judge) + ' 1/' + fnum(r.FREX, 0) + ' ' + (r.delta_x_judge ? 'OK' : 'NG') + ')' : '') + '</div>';
+    } else {
+      html += '<div class="calc-line">δx ＝ P(L－x){3L²－4(L－x)²}／(48EI)\n　＝ ' + fnum(r.P, 0) + 'N×(' + fnum(r.L, 0) + 'mm－' + fnum(r.x, 0) + 'mm)×[3×(' + fnum(r.L, 0) + 'mm)²－4×（' + fnum(r.L, 0) + 'mm－' + fnum(r.x, 0) + 'mm)²]\n　／(48×' + fnum(r.E, 0) + 'N/mm²×' + fnum(r.I) + 'mm⁴)\n　＝ ' + fnum(r.delta_x) + 'mm' +
+        (r.frexOn ? ' (1/' + r.L_over_deltax + ' ' + cmp(r.delta_x_judge) + ' 1/' + fnum(r.FREX, 0) + ' ' + (r.delta_x_judge ? 'OK' : 'NG') + ')' : '') + '</div>';
+    }
+
+    html += '<div class="final ' + (r.CHK2 ? 'final-ok' : 'final-ng') + '">以上計算より、' + h(r.prtName) + 'は設定の条件において強度上問題' + (r.CHK2 ? '無い。' : '有り、要再検討！') + '</div>';
+
+    html += '<div class="sub-head">たわみ角θx</div>';
+    if (r.xsctCHK === 1) {
+      html += '<div class="calc-line">θx ＝ P(L²－4x²)／(16EI)\n　＝ ' + fnum(r.P, 0) + 'N×{(' + fnum(r.L, 0) + 'mm)²－4×(' + fnum(r.x, 0) + 'mm)²}／(16×' + fnum(r.E, 0) + 'N/mm²×' + fnum(r.I) + 'mm⁴)\n　＝ ' + fnum(r.thetax_rad, 6) + 'rad (' + fnum(r.thetax_deg, 4) + '°)</div>';
+    } else {
+      html += '<div class="calc-line">θx ＝ －P{L²－4(L-x)²}／(16EI)\n　＝ －' + fnum(r.P, 0) + 'N×{(' + fnum(r.L, 0) + 'mm)²－4×(' + fnum(r.L, 0) + 'mm－' + fnum(r.x, 0) + 'mm)²}／(16×' + fnum(r.E, 0) + 'N/mm²×' + fnum(r.I) + 'mm⁴)\n　＝ ' + fnum(r.thetax_rad, 6) + 'rad (' + fnum(r.thetax_deg, 4) + '°)</div>';
+    }
+    html += '</div>'; // left
+
+    html += '<div class="right">';
+    html += '<div class="panel-title">x位置判定</div>';
+    html += '<div class="rowline"><span class="lbl">任意位置x</span><span class="val">' + fnum(r.x, 0) + ' <small>mm</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">x位置判定</span><span class="val">' + r.xJudgeText + '</span></div>';
+
+    html += '<div class="panel-title">区間別モーメント・たわみ</div>';
+    html += '<div class="splitcols">';
+    html += '<div class="box"><h4>0≦x≦L/2 の場合</h4>';
+    html += '<div class="rowline"><span class="lbl">Mx1</span><span class="val">' + (r.Mx1 !== null ? fnum(r.Mx1) : '-') + ' <small>N・mm</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">δx1</span><span class="val">' + (r.delta_x1 !== null ? fnum(r.delta_x1) : '-') + ' <small>mm</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">L/δx1</span><span class="val">' + (r.xsctCHK === 1 ? r.L_over_deltax : '-') + '</span></div>';
+    html += diagramMini('left') + '</div>';
+    html += '<div class="box"><h4>L/2≦x≦L の場合</h4>';
+    html += '<div class="rowline"><span class="lbl">Mx2</span><span class="val">' + (r.Mx2 !== null ? fnum(r.Mx2) : '-') + ' <small>N・mm</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">δx2</span><span class="val">' + (r.delta_x2 !== null ? fnum(r.delta_x2) : '-') + ' <small>mm</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">L/δx2</span><span class="val">' + (r.xsctCHK === 2 ? r.L_over_deltax : '-') + '</span></div>';
+    html += diagramMini('right') + '</div>';
+    html += '</div>'; // splitcols
+
+    html += '<div class="panel-title">計算結果（採用値）</div>';
+    html += '<div class="rowline"><span class="lbl">Mx</span><span class="val">' + fnum(r.Mx) + ' <small>N・mm</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">σbx</span><span class="val">' + fnum(r.sigma_bx) + ' <small>N/mm²</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">σbx判定</span><span class="val">' + cmp(r.sigma_bx_judge) + ' ' + badge(r.sigma_bx_judge) + '</span></div>';
+    html += '<div class="rowline"><span class="lbl">δx</span><span class="val">' + fnum(r.delta_x) + ' <small>mm</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">L/δx</span><span class="val">' + r.L_over_deltax + '</span></div>';
+    html += '<div class="rowline"><span class="lbl">δx判定</span><span class="val">' + (r.frexOn ? cmp(r.delta_x_judge) : '-') + ' ' + badge(r.delta_x_judge) + '</span></div>';
+    html += '<div class="rowline"><span class="lbl">_CHK2</span><span class="val">' + badge(r.CHK2) + '</span></div>';
+    html += '<div class="rowline"><span class="lbl">θx</span><span class="val">' + fnum(r.thetax_rad, 6) + ' <small>rad</small></span></div>';
+    html += '<div class="rowline"><span class="lbl">&nbsp;</span><span class="val">' + fnum(r.thetax_deg, 4) + ' <small>°</small></span></div>';
+    html += '</div>'; // right
+    html += '</div></div>'; // cols / sheet
+  }
+
+  // ===== ④ 公式（一般式） =====
+  html += '<h2 class="bar">④ 公式（一般式）</h2>';
+  html += '<div class="sheet"><div class="grid2">';
+  html += '<div>';
+  html += '<div class="formula-ref"><span>RA ＝ RB ＝ P／2</span></div>';
+  html += '<div class="formula-ref"><span>Mmax ＝ PL／4</span><span class="tag">' + diagramMini('center') + '</span></div>';
+  html += '<div class="formula-ref"><span>Mx ＝ Px／2</span><span class="tag">〔0≦x≦L/2〕</span></div>';
+  html += '<div class="formula-ref"><span>Mx ＝ P(L－x)／2</span><span class="tag">〔L/2≦x≦L〕</span></div>';
+  html += '</div>';
+  html += '<div>';
+  html += '<div class="formula-ref"><span>δmax ＝ PL³／(48EI)</span><span class="tag">〔荷重点〕</span></div>';
+  html += '<div class="formula-ref"><span>δx ＝ Px(3L²－4x²)／(48EI)</span><span class="tag">〔0≦x≦L/2〕</span></div>';
+  html += '<div class="formula-ref"><span>δx ＝ P(L－x)[3L²－4(L－x)²]／(48EI)</span><span class="tag">〔L/2≦x≦L〕</span></div>';
+  html += '<div class="formula-ref"><span>θx ＝ P(L²－4x²)／(16EI)</span><span class="tag">〔0≦x≦L/2〕</span></div>';
+  html += '<div class="formula-ref"><span>θx ＝ －P{L²－4(L-x)²}／(16EI)</span><span class="tag">〔L/2≦x≦L〕</span></div>';
+  html += '<div class="formula-ref"><span>θA ＝ －θB ＝ PL²／(16EI)</span></div>';
+  html += '</div>';
+  html += '</div><div class="note-line" style="margin-top:8px;">〔＊＊＊〕…計算位置等の条件</div></div>';
+
+  document.getElementById('results').innerHTML = html;
+}
+</script>
+</body>
+</html>
