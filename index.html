@@ -38,119 +38,166 @@
   .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:0;align-items:start;}
   .cols .left{padding:16px 20px 16px 4px;border-right:1px dashed var(--line);}
   .cols .right{padding:16px 4px 16px 20px;background:var(--panelbg);}
-  /* ---------- スマホ用FABメニューボタン ---------- */
+  /* ============================================================
+     Material Design ボトムシート＋FAB（スマホ専用）
+  ============================================================ */
   .menu-fab{
     display:none;
-    position:fixed;left:18px;bottom:22px;z-index:101;
-    width:64px;height:64px;border-radius:50%;
-    background:var(--accent);color:#fff;
-    border:none;cursor:pointer;
-    flex-direction:column;align-items:center;justify-content:center;gap:2px;
-    box-shadow:0 4px 14px rgba(0,0,0,.28);
-    font-size:10.5px;font-weight:700;letter-spacing:.03em;
-    transition:background .15s;
+    position:fixed;right:20px;bottom:24px;z-index:200;
+    width:56px;height:56px;border-radius:50%;
+    background:var(--accent);color:#fff;border:none;cursor:pointer;
+    align-items:center;justify-content:center;
+    box-shadow:0 3px 5px -1px rgba(0,0,0,.2),0 6px 10px rgba(0,0,0,.14),0 1px 18px rgba(0,0,0,.12);
+    transition:box-shadow .2s,background .15s;
+    padding:0;
   }
-  .menu-fab:active{background:var(--navy-d);}
-  .menu-fab .fab-icon{font-size:20px;line-height:1;}
-  .side-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;}
-  .side-overlay.open{display:block;}
+  .menu-fab svg{width:24px;height:24px;fill:#fff;}
+  .menu-fab:active{background:var(--navy-d);box-shadow:0 7px 8px -4px rgba(0,0,0,.2),0 12px 17px rgba(0,0,0,.14);}
 
-  /* ---------- タブレット（980px以下） ---------- */
+  /* スクリム（背景暗転） */
+  .side-overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,.5);z-index:299;
+    opacity:0;transition:opacity .25s;
+  }
+  .side-overlay.open{display:block;opacity:1;}
+
+  /* ボトムシート本体 */
+  .bottom-sheet{
+    display:none;
+    position:fixed;left:0;right:0;bottom:0;z-index:300;
+    background:#fff;
+    border-radius:28px 28px 0 0;
+    max-height:80vh;overflow-y:auto;
+    transform:translateY(100%);
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+    padding:0 0 env(safe-area-inset-bottom,0);
+  }
+  .bottom-sheet.open{display:block;transform:translateY(0);}
+  .bottom-sheet-handle{
+    display:flex;justify-content:center;padding:12px 0 4px;
+    position:sticky;top:0;background:#fff;z-index:1;
+  }
+  .bottom-sheet-handle::before{
+    content:'';display:block;width:32px;height:4px;
+    border-radius:2px;background:#e0e0e0;
+  }
+  .bottom-sheet-header{
+    padding:4px 20px 10px;
+    font-size:11px;font-weight:700;color:#9aa5b1;letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .bs-nav-item{
+    display:flex;align-items:center;justify-content:space-between;
+    width:100%;text-align:left;background:none;border:none;
+    padding:14px 20px;font-size:15px;color:#1a202c;cursor:pointer;
+    border-bottom:1px solid #f0f3f7;gap:10px;
+    transition:background .12s;
+  }
+  .bs-nav-item:active{background:#f3f7fb;}
+  .bs-nav-item.active{color:var(--accent);font-weight:700;background:#eff6ff;}
+  .bs-nav-item .bs-id{font-size:12px;color:#9aa5b1;min-width:32px;}
+  .bs-nav-item .bs-tag{font-size:11px;padding:2px 8px;border-radius:10px;flex:0 0 auto;}
+  .bs-nav-item .bs-tag.ready{background:#e6f4ea;color:var(--ok);}
+  .bs-nav-item .bs-tag.todo{background:#eef1f5;color:#9aa5b1;}
+  .bs-cat-label{
+    padding:10px 20px 4px;font-size:11px;font-weight:700;
+    color:#fff;background:var(--accent);letter-spacing:.05em;
+  }
+  .bs-cat-label:first-child{padding-top:6px;}
+
+  /* ============================================================
+     PC・スマホ共通：rowline・free-row を縦列に統一
+  ============================================================ */
+  .rowline{
+    display:flex;flex-direction:column;
+    align-items:flex-start;gap:4px;
+    padding:10px 0;border-bottom:1px solid #eef1f5;font-size:13px;
+  }
+  .rowline .lbl{color:#6b7280;font-weight:600;font-size:12px;min-width:auto;}
+  .rowline .val{font-weight:700;color:#16293f;font-size:14px;}
+  .rowline .val small{font-weight:400;color:#8996a3;margin-left:3px;font-size:12px;}
+  .rowline input[type=text],
+  .rowline input[type=number],
+  .rowline select{
+    width:100%;padding:8px 10px;
+    border:1px solid #c7d0da;border-radius:8px;
+    font-size:15px;background:#fff;
+    box-sizing:border-box;
+  }
+  .rowline select{text-align:left;}
+
+  .free-grid{display:grid;grid-template-columns:1fr;gap:0;margin:4px 0;}
+  .free-row{
+    display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+    padding:10px 0;border-bottom:1px solid #eef1f5;
+  }
+  .free-lbl{color:#6b7280;font-weight:600;font-size:12px;}
+  .free-inp{
+    width:100%;padding:8px 10px;
+    border:1px solid #c7d0da;border-radius:8px;
+    font-size:15px;background:#fff;text-align:left;
+    box-sizing:border-box;
+  }
+
+  /* ============================================================
+     タブレット（980px以下）
+  ============================================================ */
   @media (max-width:980px){
     .layout{flex-direction:column;}
-    .side{width:100%;flex:none;height:auto;position:relative;max-height:260px;overflow-y:auto;}
+    .side{width:100%;flex:none;height:auto;position:relative;max-height:240px;overflow-y:auto;}
     .cols{grid-template-columns:1fr;}
     .cols .left{border-right:none;border-bottom:1px dashed var(--line);}
     .splitcols{grid-template-columns:1fr 1fr;}
   }
 
-  /* ---------- スマホ（600px以下） ---------- */
+  /* ============================================================
+     スマホ（600px以下）
+  ============================================================ */
   @media (max-width:600px){
-    /* トップバー */
-    .topbar{padding:10px 14px;gap:8px;}
+    .topbar{padding:10px 14px;}
     .topbar h1{font-size:15px;}
     .topbar .crumb{font-size:11px;}
 
-    /* FABボタン表示 */
+    /* サイドナビ非表示（ボトムシートで代替） */
+    .side{display:none;}
     .menu-fab{display:flex;}
 
-    /* サイドナビをドロワーに変更 */
-    .side{
-      position:fixed;left:-100%;top:0;width:80%;max-width:280px;height:100vh;
-      max-height:100vh;overflow-y:auto;z-index:100;
-      transition:left .25s ease;border-right:1px solid var(--line);
-      padding-bottom:80px;
-    }
-    .side.open{left:0;}
-
-    /* 任意入力：1列縦積み・入力欄フル幅 */
-    .free-grid{grid-template-columns:1fr;}
-    .free-row{justify-content:space-between;}
-    .free-inp{width:130px;font-size:15px;padding:6px 8px;}
-
-    /* メインコンテンツ */
-    .main{padding:14px 12px 60px;}
+    .main{padding:14px 12px 80px;}
     .wrap{max-width:100%;}
 
-    /* タイトル */
     h1.pageTitle{font-size:16px;}
     h1.pageTitle .sub{font-size:13px;}
-    h2.bar{font-size:13px;padding:6px 12px;margin:16px 0 0;}
-    .sheet{padding:12px 10px;}
+    h2.bar{font-size:13px;padding:7px 12px;margin:16px 0 0;}
+    .sheet{padding:14px 12px;}
 
-    /* 左右カラムを縦積みに */
     .cols{grid-template-columns:1fr;}
-    .cols .left{padding:12px 4px;border-right:none;border-bottom:1px dashed var(--line);}
-    .cols .right{padding:12px 4px;}
+    .cols .left{padding:12px 0;border-right:none;border-bottom:1px dashed var(--line);}
+    .cols .right{padding:12px 0;}
     .splitcols{grid-template-columns:1fr;}
+    .grid2{grid-template-columns:1fr;}
 
-    /* 入力行：縦積みにして幅を確保 */
-    .rowline{
-      flex-direction:column;
-      align-items:flex-start;
-      gap:4px;
-      padding:8px 0;
-    }
-    .rowline .lbl{min-width:auto;font-size:13px;}
-    .rowline input[type=text],
-    .rowline input[type=number],
-    .rowline select{
-      width:100%;max-width:100%;font-size:15px;padding:7px 10px;
-    }
-    .rowline .val{font-size:14px;}
-
-    /* 計算書テキスト */
-    .calc-line{font-size:12.5px;padding:6px 8px;margin:4px 0 4px 4px;overflow-x:auto;}
+    .calc-line{font-size:12.5px;padding:6px 8px;margin:4px 0;overflow-x:auto;}
     .expl{font-size:13px;}
     .note-line{font-size:11.5px;}
     .sub-head{font-size:13px;}
 
-    /* テーブル */
     table.sect{font-size:11px;display:block;overflow-x:auto;}
 
-    /* ボタン */
-    .btn{width:100%;padding:12px;font-size:15px;margin-top:12px;}
+    .btn{width:100%;padding:13px;font-size:15px;margin-top:12px;border-radius:8px;}
     .btnbar{padding:0;}
-
-    /* パネルタイトル */
     .panel-title{font-size:12.5px;}
-
-    /* grid2を縦積み */
-    .grid2{grid-template-columns:1fr;}
-
-    /* formula-ref */
     .formula-ref{flex-direction:column;align-items:flex-start;gap:4px;font-size:12px;}
-
-    /* 未実装ページ */
     .todoWrap{padding:24px 16px;}
     .todoWrap h2{font-size:16px;}
     .todoWrap p{font-size:13px;}
-
-    /* diagram */
     .diagram-wrap svg,.diagram-wrap img{max-width:100%;height:auto;}
   }
 
-  /* 左：文章の計算書 */
+  /* ============================================================
+     共通コンポーネント
+  ============================================================ */
+  /* 計算書 */
   .lead{font-size:13px;color:#4a5568;margin:2px 0 10px;}
   .sub-head{font-weight:700;color:var(--navy-d);margin:16px 0 4px;font-size:14px;}
   .sub-head::before{content:"・";color:var(--accent);}
@@ -164,15 +211,7 @@
   .final-ok{background:#e6f4ea;color:var(--ok);border:1px solid #b7dfc4;}
   .final-ng{background:#fbe9e9;color:var(--ng);border:1px solid #eeb9b9;}
 
-  /* 右：入力・計算結果パネル */
-  .rowline{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f5;font-size:13px;}
-  .rowline .lbl{color:#4a5568;font-weight:600;min-width:110px;}
-  .rowline .val{font-weight:700;color:#16293f;text-align:right;}
-  .rowline .val small{font-weight:400;color:#8996a3;margin-left:2px;}
-  .rowline input[type=text],.rowline input[type=number],.rowline select{
-    width:120px;padding:5px 7px;border:1px solid #c7d0da;border-radius:4px;font-size:13px;text-align:right;background:#fff;
-  }
-  .rowline select{text-align:left;width:150px;}
+  /* パネル・ボタン・バッジ */
   .panel-title{font-weight:700;font-size:13px;color:#fff;background:var(--accent);padding:5px 10px;border-radius:4px;margin:14px 0 4px;}
   .panel-title:first-child{margin-top:0;}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
@@ -180,7 +219,7 @@
   table.sect{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0;}
   table.sect th,table.sect td{border:1px solid var(--line);padding:4px 6px;text-align:center;}
   table.sect th{background:#eef2f7;color:#374151;}
-  .btn{background:var(--accent);color:#fff;border:none;padding:11px 34px;border-radius:5px;font-size:15px;cursor:pointer;font-weight:700;margin-top:16px;}
+  .btn{background:var(--accent);color:#fff;border:none;padding:11px 34px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:700;margin-top:16px;}
   .btn:hover{background:var(--navy);}
   .btnbar{text-align:center;}
   .badge{display:inline-block;padding:2px 12px;border-radius:12px;font-weight:700;font-size:12px;color:#fff;}
@@ -191,12 +230,6 @@
   .note{font-size:12px;color:#8996a3;margin-top:18px;line-height:1.7;padding:12px;background:#fff;border:1px solid var(--line);border-radius:6px;}
   .formula-ref{font-family:"Consolas",monospace;font-size:13px;color:#20303f;background:#f7f9fc;border:1px solid var(--line);border-radius:4px;padding:6px 10px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;}
   .formula-ref .tag{font-size:11px;color:#8996a3;white-space:nowrap;}
-
-  /* 任意入力グリッド */
-  .free-grid{display:grid;grid-template-columns:1fr;gap:2px;margin:4px 0;}
-  .free-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px solid #eef1f5;font-size:12.5px;}
-  .free-lbl{color:#4a5568;font-weight:600;white-space:nowrap;font-size:12px;}
-  .free-inp{width:90px;padding:4px 6px;border:1px solid #c7d0da;border-radius:4px;font-size:13px;text-align:right;background:#fff;}
 
   /* 未実装シート用プレースホルダ */
   .todoWrap{background:#fff;border:1px solid var(--line);border-radius:8px;padding:40px 30px;text-align:center;color:#4a5568;}
@@ -211,10 +244,13 @@
   <div class="crumb" id="crumb">読み込み中…</div>
 </div>
 <div class="side-overlay" id="overlay" onclick="closeNav()"></div>
-<button class="menu-fab" onclick="toggleNav()" aria-label="メニューを開く">
-  <span class="fab-icon">☰</span>
-  <span>メニュー</span>
+<button class="menu-fab" id="menuFab" onclick="toggleNav()" aria-label="メニュー">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
 </button>
+<div class="bottom-sheet" id="bottomSheet">
+  <div class="bottom-sheet-handle"></div>
+  <div id="bottomSheetNav"></div>
+</div>
 <div class="layout">
   <nav class="side" id="side"></nav>
   <main class="main"><div class="wrap" id="main"></div></main>
@@ -225,14 +261,20 @@
  * スマホ用サイドナビ開閉
  * ================================================================== */
 function toggleNav(){
-  var s=document.getElementById('side');
+  var sheet=document.getElementById('bottomSheet');
   var o=document.getElementById('overlay');
-  s.classList.toggle('open');
-  o.classList.toggle('open');
+  var isOpen=sheet.classList.contains('open');
+  if(isOpen){ closeNav(); } else {
+    sheet.classList.add('open');
+    o.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
 }
 function closeNav(){
   document.getElementById('side').classList.remove('open');
+  document.getElementById('bottomSheet').classList.remove('open');
   document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow='';
 }
 
 /* ====================================================================
@@ -527,19 +569,27 @@ var READY = { S1:true, S2:true, S3:true, S4:true, S5:true, S6:true, S7:true, S8:
 var currentId = null;
 
 function renderNav() {
-  var html = '';
+  var sideHtml = '';
+  var bsHtml = '';
   CATEGORIES.forEach(function (group) {
-    html += '<div class="catTitle">' + h(group.cat) + '</div>';
+    sideHtml += '<div class="catTitle">' + h(group.cat) + '</div>';
+    bsHtml += '<div class="bs-cat-label">' + h(group.cat) + '</div>';
     group.items.forEach(function (it) {
       var id = it[0], title = it[1];
       var ready = !!READY[id];
-      html += '<button type="button" class="navItem" data-id="' + id + '" onclick="loadCase(\'' + id + '\')">' +
-                '<span>' + h(id) + '　' + h(title) + '</span>' +
-                '<span class="tag ' + (ready ? 'ready' : 'todo') + '">' + (ready ? '実装済' : '準備中') + '</span>' +
+      sideHtml += '<button type="button" class="navItem" data-id="' + id + '" onclick="loadCase(\'' + id + '\')">' +
+                  '<span>' + h(id) + '　' + h(title) + '</span>' +
+                  '<span class="tag ' + (ready ? 'ready' : 'todo') + '">' + (ready ? '実装済' : '準備中') + '</span>' +
+                '</button>';
+      bsHtml += '<button type="button" class="bs-nav-item" data-id="' + id + '" onclick="loadCase(\'' + id + '\')">' +
+                '<span class="bs-id">' + h(id) + '</span>' +
+                '<span style="flex:1;text-align:left;">' + h(title) + '</span>' +
+                '<span class="bs-tag ' + (ready ? 'ready' : 'todo') + '">' + (ready ? '実装済' : '準備中') + '</span>' +
               '</button>';
     });
   });
-  document.getElementById('side').innerHTML = html;
+  document.getElementById('side').innerHTML = sideHtml;
+  document.getElementById('bottomSheetNav').innerHTML = bsHtml;
 }
 function findMeta(id) {
   for (var i = 0; i < CATEGORIES.length; i++) {
@@ -551,8 +601,8 @@ function findMeta(id) {
 }
 function loadCase(id) {
   currentId = id;
-  closeNav(); // スマホ時にドロワーを閉じる
-  document.querySelectorAll('.navItem').forEach(function (b) {
+  closeNav();
+  document.querySelectorAll('.navItem,.bs-nav-item').forEach(function (b) {
     b.classList.toggle('active', b.getAttribute('data-id') === id);
   });
   var meta = findMeta(id);
