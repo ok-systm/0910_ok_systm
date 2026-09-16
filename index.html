@@ -83,12 +83,10 @@
     }
     .side.open{left:0;}
 
-    /* 任意入力テーブルのスクロール対応 */
-    table.sect{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
-    table.sect input[type=text],
-    table.sect input[type=number]{width:72px !important;font-size:13px;padding:4px 5px;}
-    /* checkline内のfreeBoxも横スクロール */
-    #freeBox{overflow-x:auto;}
+    /* 任意入力：1列縦積み・入力欄フル幅 */
+    .free-grid{grid-template-columns:1fr;}
+    .free-row{justify-content:space-between;}
+    .free-inp{width:130px;font-size:15px;padding:6px 8px;}
 
     /* メインコンテンツ */
     .main{padding:14px 12px 60px;}
@@ -193,6 +191,12 @@
   .note{font-size:12px;color:#8996a3;margin-top:18px;line-height:1.7;padding:12px;background:#fff;border:1px solid var(--line);border-radius:6px;}
   .formula-ref{font-family:"Consolas",monospace;font-size:13px;color:#20303f;background:#f7f9fc;border:1px solid var(--line);border-radius:4px;padding:6px 10px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;}
   .formula-ref .tag{font-size:11px;color:#8996a3;white-space:nowrap;}
+
+  /* 任意入力グリッド */
+  .free-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;margin:4px 0;}
+  .free-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px solid #eef1f5;font-size:12.5px;}
+  .free-lbl{color:#4a5568;font-weight:600;white-space:nowrap;font-size:12px;}
+  .free-inp{width:90px;padding:4px 6px;border:1px solid #c7d0da;border-radius:4px;font-size:13px;text-align:right;background:#fff;}
 
   /* 未実装シート用プレースホルダ */
   .todoWrap{background:#fff;border:1px solid var(--line);border-radius:8px;padding:40px 30px;text-align:center;color:#4a5568;}
@@ -302,37 +306,25 @@ function memberBlockHTML(preset) {
         '<div class="note-line" style="margin-left:0;">※他の部材は「任意入力」で断面性能を直接入力してください（元のExcelは部材データベースを外部ブックにリンクしていたため、実データが同梱されているのはこの1点のみです）</div>' +
       '</div>' +
       '<div class="checkline"><label><input type="radio" name="memberMode" value="free" onclick="toggleMemberMode()"> 任意入力（断面性能を直接入力）</label></div>' +
-      '<div id="freeBox" style="margin:6px 0 0 20px;">' +
-        '<table class="sect">' +
-          '<tr><th>商品記号</th><th>板厚(mm)</th><th>単位重量(kg/m)</th><th>断面積(mm²)</th></tr>' +
-          '<tr>' +
-            '<td><input type="text" name="freeName" value="' + h(preset.label) + '" style="width:120px;"></td>' +
-            '<td><input type="number" step="any" name="thickness" value="' + preset.thickness + '" style="width:70px;"></td>' +
-            '<td><input type="number" step="any" name="weight" value="' + preset.weight + '" style="width:80px;"></td>' +
-            '<td><input type="number" step="any" name="area" value="' + preset.area + '" style="width:80px;"></td>' +
-          '</tr>' +
-          '<tr><th>Zx(mm³)</th><th>Zy(mm³)</th><th>Ix(mm⁴)</th><th>Iy(mm⁴)</th></tr>' +
-          '<tr>' +
-            '<td><input type="number" step="any" name="Zx" value="' + preset.Zx + '" style="width:80px;"></td>' +
-            '<td><input type="number" step="any" name="Zy" value="' + preset.Zy + '" style="width:80px;"></td>' +
-            '<td><input type="number" step="any" name="Ix" value="' + preset.Ix + '" style="width:80px;"></td>' +
-            '<td><input type="number" step="any" name="Iy" value="' + preset.Iy + '" style="width:80px;"></td>' +
-          '</tr>' +
-          '<tr><th>ix(mm)</th><th>iy(mm)</th><th>短期F(N/mm²)</th><th>長期F(N/mm²)</th></tr>' +
-          '<tr>' +
-            '<td><input type="number" step="any" name="ix" value="' + preset.ix + '" style="width:70px;"></td>' +
-            '<td><input type="number" step="any" name="iy" value="' + preset.iy + '" style="width:70px;"></td>' +
-            '<td><input type="number" step="any" name="F_short" value="' + preset.F_short + '" style="width:70px;"></td>' +
-            '<td><input type="number" step="any" name="F_long" value="' + preset.F_long + '" style="width:70px;"></td>' +
-          '</tr>' +
-          '<tr><th>E(N/mm²)</th><th>Zpx(mm³)</th><th>Zpy(mm³)</th><th>Zu／Zv</th></tr>' +
-          '<tr>' +
-            '<td><input type="number" step="any" name="E" value="' + preset.E + '" style="width:80px;"></td>' +
-            '<td><input type="number" step="any" name="Zpx" value="' + preset.Zpx + '" style="width:70px;"></td>' +
-            '<td><input type="number" step="any" name="Zpy" value="' + preset.Zpy + '" style="width:70px;"></td>' +
-            '<td><input type="number" step="any" name="Zu" value="' + (preset.Zu || 0) + '" style="width:34px;">/<input type="number" step="any" name="Zv" value="' + (preset.Zv || 0) + '" style="width:34px;"></td>' +
-          '</tr>' +
-        '</table>' +
+      '<div id="freeBox" style="margin:6px 0 0 0;">' +
+        '<div class="free-grid">' +
+          '<div class="free-row"><span class="free-lbl">商品記号</span><input type="text" name="freeName" value="' + h(preset.label) + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">板厚 (mm)</span><input type="number" step="any" name="thickness" value="' + preset.thickness + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">単位重量 (kg/m)</span><input type="number" step="any" name="weight" value="' + preset.weight + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">断面積 (mm²)</span><input type="number" step="any" name="area" value="' + preset.area + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">Zx (mm³)</span><input type="number" step="any" name="Zx" value="' + preset.Zx + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">Zy (mm³)</span><input type="number" step="any" name="Zy" value="' + preset.Zy + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">Ix (mm⁴)</span><input type="number" step="any" name="Ix" value="' + preset.Ix + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">Iy (mm⁴)</span><input type="number" step="any" name="Iy" value="' + preset.Iy + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">ix (mm)</span><input type="number" step="any" name="ix" value="' + preset.ix + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">iy (mm)</span><input type="number" step="any" name="iy" value="' + preset.iy + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">短期F (N/mm²)</span><input type="number" step="any" name="F_short" value="' + preset.F_short + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">長期F (N/mm²)</span><input type="number" step="any" name="F_long" value="' + preset.F_long + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">E (N/mm²)</span><input type="number" step="any" name="E" value="' + preset.E + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">Zpx (mm³)</span><input type="number" step="any" name="Zpx" value="' + preset.Zpx + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">Zpy (mm³)</span><input type="number" step="any" name="Zpy" value="' + preset.Zpy + '" class="free-inp"></div>' +
+          '<div class="free-row"><span class="free-lbl">Zu／Zv</span><span style="display:flex;gap:4px;align-items:center;"><input type="number" step="any" name="Zu" value="' + (preset.Zu||0) + '" class="free-inp" style="flex:1;min-width:0;"><span style="color:#8996a3;">/</span><input type="number" step="any" name="Zv" value="' + (preset.Zv||0) + '" class="free-inp" style="flex:1;min-width:0;"></span></div>' +
+        '</div>' +
       '</div>' +
     '</div>' +
     '<div id="caseFields"></div>' +
