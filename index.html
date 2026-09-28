@@ -5563,8 +5563,7 @@ function saveGithub(){
       var hdr = {'Authorization':'Bearer ' + tok, 'Accept':'application/vnd.github+json'};
       return fetch(url + (g.branch ? '?ref=' + encodeURIComponent(g.branch) : ''), {headers:hdr, cache:'no-store'}).then(function(r){
         if(r.status === 404) return {sha:null, rules:[]};
-        if(r.status === 401 || r.status === 403) throw {auth:r.status};
-        if(!r.ok) throw {http:r.status};
+        if(!r.ok) return _ghFail(r, g);
         return r.json().then(function(j){
           var cur = [];
           try{ cur = JSON.parse(new TextDecoder().decode(_b64ToBytes(j.content))); }catch(e){}
@@ -5582,9 +5581,8 @@ function saveGithub(){
         if(cur.sha) body.sha = cur.sha;
         if(g.branch) body.branch = g.branch;
         return fetch(url, {method:'PUT', headers:Object.assign({'Content-Type':'application/json'}, hdr), body:JSON.stringify(body)}).then(function(r){
-          if(r.status === 401 || r.status === 403) throw {auth:r.status};
-          if(r.status === 409 || r.status === 422){ toast('他の人と同時に保存したため失敗しました。再読み込みしてやり直してください'); return; }
-          if(!r.ok) throw {http:r.status};
+          if(r.status === 409){ toast('他の人と同時に保存したため失敗しました。再読み込みしてやり直してください', 6000); return; }
+          if(!r.ok) return _ghFail(r, g);
           window.__SERVER_JSON__ = _core.canon(rules);
           afterSave(rules);
           toast('GitHubに保存しました ☁（反映まで1〜2分かかります・編集 ' + rules.length + ' 件）');
@@ -5592,9 +5590,28 @@ function saveGithub(){
       });
     });
   }).catch(function(e){
-    if(e && e.auth){ sessionStorage.removeItem('kit-gh-token'); toast('トークンが無効か期限切れです。管理者に連絡してください'); }
-    else if(e && e.http){ toast('保存に失敗しました（HTTP ' + e.http + '）'); }
-    else toast('保存に失敗しました（通信エラー）');
+    if(e && e.ghMsg){ toast(e.ghMsg, 12000); console.error('[GitHub保存エラー]', e); }
+    else { toast('保存に失敗しました（通信エラー）', 8000); console.error(e); }
+  });
+}
+
+/* GitHubのエラー応答を、原因が分かる文面にして投げる */
+function _ghFail(r, g){
+  return r.json().catch(function(){ return {}; }).then(function(j){
+    var m = j && j.message ? j.message : '';
+    var where = g.owner + '/' + g.repo + '（' + g.path + '）';
+    var msg;
+    if(r.status === 401){
+      sessionStorage.removeItem('kit-gh-token');
+      msg = 'トークンが無効か期限切れです [401: ' + m + ']';
+    }else if(r.status === 403){
+      msg = 'トークンに書き込み権限がありません [403: ' + m + '] 対象: ' + where + '。トークンの「Contents: Read and write」と、対象リポジトリの選択を確認してください';
+    }else if(r.status === 404){
+      msg = 'リポジトリが見つかりません [404: ' + m + '] 対象: ' + where + '。名前の違い、またはトークンがこのリポジトリにアクセスできない可能性があります';
+    }else{
+      msg = '保存に失敗しました [' + r.status + ': ' + m + '] 対象: ' + where;
+    }
+    throw {ghMsg: msg, status: r.status};
   });
 }
 
@@ -5643,12 +5660,12 @@ function download(src){
 
 function p2(n){return n<10?'0'+n:''+n;}
 
-function toast(msg){
+function toast(msg, ms){
   var t=document.getElementById('editToast');
   if(!t) return;
   t.textContent=msg; t.style.opacity='1';
   clearTimeout(t._t);
-  t._t=setTimeout(function(){t.style.opacity='0';},3000);
+  t._t=setTimeout(function(){t.style.opacity='0';}, ms || 3000);
 }
 
 /* 画面が動的に再生成されても（案件切替・計算結果）編集可能にする */
