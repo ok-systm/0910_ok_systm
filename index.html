@@ -304,9 +304,26 @@
     white-space:nowrap;
   }
   body.edit-on input,body.edit-on select,
-  body.edit-on button:not(#editFab):not(.b-save):not(.b-cancel):not(.navItem):not(.bs-nav-item):not(.bs-close-btn):not(#menuFab){
+  body.edit-on button:not(#editFab):not(.b-save):not(.b-cancel):not(.navItem):not(.bs-nav-item):not(.bs-close-btn):not(#menuFab):not(.fig-btn){
     pointer-events:none;
   }
+  /* ===== 図の差し替え・追加・削除 ===== */
+  .diagram-wrap{position:relative;}
+  .diagram-wrap img.fig-img{max-width:100%;height:auto;display:inline-block;}
+  .diagram-wrap[data-fig-del]{display:none;}
+  body.edit-on .diagram-wrap[data-fig-del]{display:block;opacity:.35;outline:2px dashed #c53030;}
+  body.edit-on .diagram-wrap[data-fig-del]::before{
+    content:'削除済み（保存すると非表示になります）';display:block;color:#c53030;font-size:12px;font-weight:700;margin-bottom:4px;
+  }
+  .fig-tools{display:none;}
+  body.edit-on .fig-tools{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0 2px;}
+  .fig-tools button.fig-btn{
+    padding:4px 10px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;
+    border:1px solid #6b46c1;background:#fff;color:#553c9a;
+  }
+  .fig-tools button.fig-btn:hover{background:#efe9fb;}
+  .fig-tools button.fig-btn.danger{border-color:#c53030;color:#c53030;}
+  .fig-tools button.fig-btn.danger:hover{background:#fdecec;}
   #editToast{
     position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
     background:#1a202c;color:#fff;padding:9px 22px;
@@ -5243,7 +5260,8 @@ function _editCore(){
   var UI = {editBanner:1, editToast:1, editFab:1};
   function kids(p){
     return Array.prototype.filter.call(p.children, function(c){
-      return !UI[c.id] && c.tagName !== 'SCRIPT';
+      return !UI[c.id] && c.tagName !== 'SCRIPT' && !(c.classList &&
+        (c.classList.contains('fig-tools') || c.classList.contains('fig-img') || c.classList.contains('fig-added')));
     });
   }
   /* 直近のid付き祖先（無ければBODY）からの位置パス */
@@ -5288,8 +5306,44 @@ function _editCore(){
       nodes[nodes.length-1].nodeValue += arr.slice(nodes.length).join('');
     }
   }
+  /* ---- 図（.diagram-wrap）の差し替え・削除・追加 ---- */
+  function figSig(r){
+    return r.mode + '|' + (r.src || '').length + '|' + (r.adds || []).map(function(x){ return x.length; }).join(',');
+  }
+  function mkImg(src){
+    var i = document.createElement('img');
+    i.className = 'fig-img'; i.src = src; i.alt = '挿入図';
+    return i;
+  }
+  function applyFig(r, force){
+    if(r.c && r.c !== (window.currentId || '')) return;
+    var el = resolve(r.s);
+    if(!el || !el.classList || !el.classList.contains('diagram-wrap') || el.classList.contains('fig-added')) return;
+    var sg = figSig(r);
+    if(!force && el.getAttribute('data-fig') === sg) return;
+    // 前回の差し替え画像・追加図を片付ける
+    var nx = el.nextElementSibling;
+    while(nx && nx.classList.contains('fig-added')){ var d = nx; nx = nx.nextElementSibling; d.parentNode.removeChild(d); }
+    Array.prototype.slice.call(el.children).forEach(function(c){ if(c.classList.contains('fig-img')) el.removeChild(c); });
+    var svg = el.querySelector('svg');
+    if(r.mode === 'img' && r.src){
+      if(svg && svg.parentNode === el){ svg.style.display = 'none'; el.insertBefore(mkImg(r.src), svg); }
+      else el.insertBefore(mkImg(r.src), el.firstChild);
+    }else if(svg){ svg.style.display = ''; }
+    if(r.mode === 'del') el.setAttribute('data-fig-del', '1'); else el.removeAttribute('data-fig-del');
+    var ref = el;
+    (r.adds || []).forEach(function(src){
+      var w = document.createElement('div');
+      w.className = 'diagram-wrap fig-added';
+      w.appendChild(mkImg(src));
+      ref.parentNode.insertBefore(w, ref.nextSibling);
+      ref = w;
+    });
+    el.setAttribute('data-fig', sg);
+  }
   function applyAll(rules){
     rules.forEach(function(r){
+      if(r.t === 'fig'){ applyFig(r); return; }
       if(r.c && r.c !== (window.currentId || '')) return;
       var el = resolve(r.s);
       if(el && same(texts(el), r.o)) setTexts(el, r.n);
@@ -5299,7 +5353,7 @@ function _editCore(){
   function merge(list){
     var seen = {}, out = [];
     list.forEach(function(r){
-      var k = r.c + '|' + r.s + '|' + JSON.stringify(r.o);
+      var k = r.t === 'fig' ? 'fig|' + r.c + '|' + r.s : r.c + '|' + r.s + '|' + JSON.stringify(r.o);
       if(!seen[k]){ seen[k] = 1; out.push(r); }
     });
     return out;
@@ -5335,7 +5389,7 @@ function _editCore(){
       }).catch(function(){});
     }
   }
-  return {sig:sig, scope:scope, texts:texts, same:same, install:install, fetchServer:fetchServer, canon:canon, api:API};
+  return {sig:sig, scope:scope, texts:texts, same:same, install:install, fetchServer:fetchServer, canon:canon, api:API, applyFig:applyFig};
 }
 
 /* 保存先：github.io で開いたときは GitHub、それ以外は PHP（edits.php）。独自ドメインで GitHub Pages を使う場合は 'github' に書き換える */
@@ -5353,6 +5407,7 @@ _core.install(window.__EDIT_EMBEDDED__ || []);  // 保存済みの編集内容�
 var editOn = false;
 var _rules = {};     // 編集内容の置換ルール
 var _origHTML = '';  // キャンセル用
+var _rulesSnap = []; // キャンセル用（編集開始時のルール）
 
 var SKIP_TAGS = {INPUT:1,TEXTAREA:1,SELECT:1,BUTTON:1,SCRIPT:1,STYLE:1,OPTION:1};
 var SKIP_IDS  = {editBanner:1,editFab:1,editToast:1,crumb:1};
@@ -5372,12 +5427,14 @@ function enterEdit(){
   editOn = true;
   _rules = {};
   _origHTML = document.body.innerHTML;
+  _rulesSnap = (window.__EDIT_RULES__ || []).slice();   // キャンセル用
 
   document.body.classList.add('edit-on');
   document.getElementById('editBanner').classList.add('on');
   document.getElementById('editFabLabel').textContent = '編集終了';
 
   makeEditable(document.body);
+  attachFigTools(document.body);
   toast('黄色の部分をクリックして直接編集できます ✏️');
 }
 
@@ -5413,9 +5470,96 @@ function commit(el){
   else _rules[key] = {s:s, c:c, o:el._t0, n:now};
 }
 
+/* ---- 図の差し替え・追加・削除 ---- */
+function figRule(w){
+  var owner = w, idx = -1;
+  while(owner.classList.contains('fig-added') && owner.previousElementSibling){ owner = owner.previousElementSibling; idx++; }
+  var s = _core.sig(owner), c = _core.scope(owner);
+  var hit = null;
+  (window.__EDIT_RULES__ || []).forEach(function(r){ if(!hit && r.t === 'fig' && r.s === s && r.c === c) hit = r; });
+  var rule = hit ? JSON.parse(JSON.stringify(hit)) : {t:'fig', s:s, c:c, mode:'orig', src:'', adds:[]};
+  rule.adds = rule.adds || [];
+  return {rule:rule, addIndex:idx};
+}
+function figCommit(rule){
+  var list = window.__EDIT_RULES__ = (window.__EDIT_RULES__ || []).slice(), put = false;
+  list.forEach(function(r, i){ if(!put && r.t === 'fig' && r.s === rule.s && r.c === rule.c){ list[i] = rule; put = true; } });
+  if(!put) list.push(rule);
+  _core.applyFig(rule, true);
+  attachFigTools(document.body, true);
+}
+/* 画像を選ぶ → 縮小して data URL にする（共有ファイルが重くならないように） */
+function pickImage(cb){
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var scale = Math.min(1, 1000 / Math.max(img.width, img.height)), q = 0.85, out = '';
+        for(var i = 0; i < 6; i++){
+          var cv = document.createElement('canvas');
+          cv.width = Math.max(1, Math.round(img.width * scale));
+          cv.height = Math.max(1, Math.round(img.height * scale));
+          cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+          out = cv.toDataURL('image/webp', q);
+          if(out.length < 300000) break;
+          scale *= 0.85; q = Math.max(0.6, q - 0.08);
+        }
+        cb(out);
+      };
+      img.onerror = function(){ toast('画像を読み込めませんでした', 5000); };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(f);
+  };
+  inp.click();
+}
+function figBtn(label, cls, fn){
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'fig-btn' + (cls ? ' ' + cls : ''); b.textContent = label;
+  b.onclick = function(e){ e.preventDefault(); e.stopPropagation(); fn(); };
+  return b;
+}
+function attachFigTools(root, force){
+  var list = Array.prototype.slice.call(root.querySelectorAll('.diagram-wrap'));
+  if(root.classList && root.classList.contains('diagram-wrap')) list.unshift(root);
+  list.forEach(function(w){
+    var old = null;
+    Array.prototype.forEach.call(w.children, function(c){ if(c.classList.contains('fig-tools')) old = c; });
+    if(old && !force) return;
+    if(old) w.removeChild(old);
+    var bar = document.createElement('div');
+    bar.className = 'fig-tools'; bar.setAttribute('contenteditable', 'false');
+    if(w.classList.contains('fig-added')){
+      bar.appendChild(figBtn('🗑 この図を削除', 'danger', function(){
+        var o = figRule(w); o.rule.adds.splice(o.addIndex, 1); figCommit(o.rule);
+      }));
+    }else{
+      var st = figRule(w).rule;
+      bar.appendChild(figBtn('🖼 画像に差し替え', '', function(){
+        pickImage(function(src){ var r = figRule(w).rule; r.mode = 'img'; r.src = src; figCommit(r); });
+      }));
+      bar.appendChild(figBtn('➕ 画像を追加', '', function(){
+        pickImage(function(src){ var r = figRule(w).rule; r.adds.push(src); figCommit(r); });
+      }));
+      if(st.mode === 'del'){
+        bar.appendChild(figBtn('↩ 削除を取り消す', '', function(){ var r = figRule(w).rule; r.mode = 'orig'; r.src = ''; figCommit(r); }));
+      }else{
+        bar.appendChild(figBtn('🗑 図を削除', 'danger', function(){ var r = figRule(w).rule; r.mode = 'del'; figCommit(r); }));
+        if(st.mode === 'img') bar.appendChild(figBtn('↩ 元の図に戻す', '', function(){ var r = figRule(w).rule; r.mode = 'orig'; r.src = ''; figCommit(r); }));
+      }
+    }
+    w.appendChild(bar);
+  });
+}
+
 /* ---- キャンセル ---- */
 function cancelEdit(){
   document.body.innerHTML = _origHTML;
+  window.__EDIT_RULES__ = _rulesSnap;
   rebindUI();
   exitState();
   toast('編集をキャンセルしました');
@@ -5440,6 +5584,7 @@ function exitState(){
     el.removeAttribute('contenteditable');
     el.removeAttribute('data-ce');
   });
+  document.querySelectorAll('.fig-tools').forEach(function(el){ el.parentNode.removeChild(el); });
 }
 
 /* ---- 保存 ---- */
@@ -5450,14 +5595,17 @@ function collectRules(){
   }
   document.querySelectorAll('[data-ce]').forEach(commit);
   var rules = (window.__EDIT_RULES__ || []).map(function(r){
-    return {s:r.s, c:r.c, o:r.o.slice(), n:r.n.slice()};
+    return r.t === 'fig' ? JSON.parse(JSON.stringify(r)) : {s:r.s, c:r.c, o:r.o.slice(), n:r.n.slice()};
   });
   Object.keys(_rules).forEach(function(k){
     var r = _rules[k], hit = null;
-    rules.forEach(function(b){ if(!hit && b.s===r.s && b.c===r.c && _core.same(b.n, r.o)) hit = b; });
+    rules.forEach(function(b){ if(!hit && !b.t && b.s===r.s && b.c===r.c && _core.same(b.n, r.o)) hit = b; });
     if(hit) hit.n = r.n; else rules.push({s:r.s, c:r.c, o:r.o, n:r.n});
   });
-  return rules.filter(function(r){ return !_core.same(r.o, r.n); });
+  return rules.filter(function(r){
+    if(r.t === 'fig') return r.mode !== 'orig' || (r.adds && r.adds.length);   // 元の図のままで追加も無ければ記録不要
+    return !_core.same(r.o, r.n);
+  });
 }
 
 /* 保存用のHTML文字列を作る（編集ボタンは残す） */
@@ -5467,6 +5615,7 @@ function buildHTML(rules){
   ['edit-data','edit-patch'].forEach(function(id){
     var o = root.querySelector('#'+id); if(o) o.parentNode.removeChild(o);
   });
+  root.querySelectorAll('.fig-tools').forEach(function(e){ e.parentNode.removeChild(e); });
   root.querySelectorAll('[contenteditable]').forEach(function(e){ e.removeAttribute('contenteditable'); });
   root.querySelectorAll('[data-ce]').forEach(function(e){ e.removeAttribute('data-ce'); });
   body.classList.remove('edit-on');
@@ -5503,6 +5652,8 @@ function saveHTML(){
 
 /* ☁ サーバーに保存（みんなの画面に反映される） */
 function saveServer(){
+  var sz = JSON.stringify(window.__EDIT_RULES__ || []).length;
+  if(sz > 3000000 && !confirm('挿入した画像が多く、共有データが約 ' + (sz/1e6).toFixed(1) + 'MB になっています。読み込みが遅くなるおそれがあります。保存しますか？')) return;
   if(EDIT_BACKEND === 'github' && _SERVED) return saveGithub();
   return savePhp();
 }
@@ -5565,9 +5716,17 @@ function saveGithub(){
         if(r.status === 404) return {sha:null, rules:[]};
         if(!r.ok) return _ghFail(r, g);
         return r.json().then(function(j){
-          var cur = [];
-          try{ cur = JSON.parse(new TextDecoder().decode(_b64ToBytes(j.content))); }catch(e){}
-          return {sha:j.sha, rules:Array.isArray(cur) ? cur : []};
+          var done = function(cur){ return {sha:j.sha, rules:Array.isArray(cur) ? cur : []}; };
+          if(j.content){
+            var cur = [];
+            try{ cur = JSON.parse(new TextDecoder().decode(_b64ToBytes(j.content))); }catch(e){}
+            return done(cur);
+          }
+          if(!j.size) return done([]);
+          // 1MBを超えるファイルは content が空で返るので、生データを取り直す
+          return fetch(url + (g.branch ? '?ref=' + encodeURIComponent(g.branch) : ''),
+            {headers:{'Authorization':hdr.Authorization, 'Accept':'application/vnd.github.raw+json'}, cache:'no-store'})
+            .then(function(rr){ return rr.ok ? rr.json() : []; }).catch(function(){ return []; }).then(done);
         });
       }).then(function(cur){
         // 自分が開いた後に、他の人が保存していないか確認
@@ -5675,7 +5834,7 @@ new MutationObserver(function(records){
   Promise.resolve().then(function(){
     records.forEach(function(r){
       Array.prototype.forEach.call(r.addedNodes, function(n){
-        if(n.nodeType === 1 && n.isConnected) makeEditable(n);
+        if(n.nodeType === 1 && n.isConnected){ makeEditable(n); attachFigTools(n); }
       });
     });
   });
