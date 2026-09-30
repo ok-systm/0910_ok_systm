@@ -304,7 +304,7 @@
     white-space:nowrap;
   }
   body.edit-on input,body.edit-on select,
-  body.edit-on button:not(#editFab):not(.b-save):not(.b-cancel):not(.navItem):not(.bs-nav-item):not(.bs-close-btn):not(#menuFab):not(.fig-btn){
+  body.edit-on button:not(#editFab):not(.b-save):not(.b-cancel):not(.navItem):not(.bs-nav-item):not(.bs-close-btn):not(#menuFab):not(.fig-btn):not(.fig-gap){
     pointer-events:none;
   }
   /* ===== 図の差し替え・追加・削除 ===== */
@@ -324,6 +324,20 @@
   .fig-tools button.fig-btn:hover{background:#efe9fb;}
   .fig-tools button.fig-btn.danger{border-color:#c53030;color:#c53030;}
   .fig-tools button.fig-btn.danger:hover{background:#fdecec;}
+  /* ===== 図の表示エリア（タイトル直下）＆ 任意位置への図の挿入 ===== */
+  #figSlot{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px;margin:12px 0 0;}
+  #figSlot:empty{display:none;}
+  #figSlot .diagram-wrap{margin:0;}
+  #figSlot .diagram-wrap svg{max-width:640px!important;}
+  .fig-gap{display:none;}
+  body.edit-on .fig-gap{
+    display:block;width:100%;margin:4px 0;padding:6px 0;box-sizing:border-box;
+    border:2px dashed #6b46c1;border-radius:6px;background:#f5f0ff;color:#553c9a;
+    font-size:12px;font-weight:700;cursor:pointer;text-align:center;
+  }
+  body.edit-on .fig-gap:hover{background:#e6dcfb;}
+  #figSlot .fig-gap{grid-column:1/-1;}
+  #btnInsFig.on{background:#fff;color:#6b46c1;}
   #editToast{
     position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
     background:#1a202c;color:#fff;padding:9px 22px;
@@ -339,6 +353,7 @@
 <div id="editBanner">
   <span>✏️ 編集モード</span><span id="editHint">🟡 黄色の部分をクリックして編集できます</span>
   <div class="acts">
+    <button class="b-cancel" id="btnInsFig" onclick="toggleInsertMode()">🖼 図を挿入</button>
     <button class="b-cancel" onclick="cancelEdit()">キャンセル</button>
     <button class="b-save" id="btnServer" onclick="saveServer()">☁ サーバーに保存</button>
     <button class="b-cancel" id="btnDownload" onclick="saveHTML()">⬇ ダウンロード</button>
@@ -511,8 +526,8 @@ function beamPointLoadDiagram(opts) {
   var xFrac = (opts.xFrac === null || opts.xFrac === undefined) ? null : opts.xFrac;
   var apos = x0 + (x1 - x0) * aFrac;
   var svg = '<svg viewBox="0 0 620 176" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">';
-  svg += '<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="4.5" refY="9" orient="auto"><path d="M0,0 L9,0 L4.5,9 z" fill="#c53030"/></marker>' +
-         '<marker id="arm" markerWidth="7" markerHeight="7" refX="3.5" refY="7" orient="auto"><path d="M0,0 L7,0 L3.5,7 z" fill="#c53030"/></marker></defs>';
+  svg += '<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#c53030"/></marker>' +
+         '<marker id="arm" markerWidth="7" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#c53030"/></marker></defs>';
   svg += '<line x1="' + apos + '" y1="18" x2="' + apos + '" y2="68" stroke="#c53030" stroke-width="3" marker-end="url(#ar)"/>';
   svg += '<text x="' + apos + '" y="14" text-anchor="middle" font-size="14" fill="#c53030" font-weight="bold">' + (opts.loadLabel || 'P') + '</text>';
   if (xFrac !== null) {
@@ -551,7 +566,7 @@ function beamTwoPointSymDiagram(opts) {
   var apos = x0 + (x1 - x0) * aFrac;
   var bpos = x0 + (x1 - x0) * bFrac;
   var svg = '<svg viewBox="0 0 620 176" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">';
-  svg += '<defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="4.5" refY="9" orient="auto"><path d="M0,0 L9,0 L4.5,9 z" fill="#c53030"/></marker></defs>';
+  svg += '<defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#c53030"/></marker></defs>';
   [apos, bpos].forEach(function (p) {
     svg += '<line x1="' + p + '" y1="18" x2="' + p + '" y2="68" stroke="#c53030" stroke-width="3" marker-end="url(#ar2)"/>';
     svg += '<text x="' + p + '" y="14" text-anchor="middle" font-size="14" fill="#c53030" font-weight="bold">' + (opts.loadLabel || 'P') + '</text>';
@@ -585,7 +600,7 @@ function beamTwoPointAsymDiagram(opts) {
   var p1pos = x0 + (x1 - x0) * p1Frac;
   var p2pos = x0 + (x1 - x0) * p2Frac;
   var svg = '<svg viewBox="0 0 620 176" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">';
-  svg += '<defs><marker id="ar3" markerWidth="9" markerHeight="9" refX="4.5" refY="9" orient="auto"><path d="M0,0 L9,0 L4.5,9 z" fill="#c53030"/></marker></defs>';
+  svg += '<defs><marker id="ar3" markerWidth="9" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#c53030"/></marker></defs>';
   [[p1pos, opts.load1Label || 'P1'], [p2pos, opts.load2Label || 'P2']].forEach(function (pr) {
     svg += '<line x1="' + pr[0] + '" y1="18" x2="' + pr[0] + '" y2="68" stroke="#c53030" stroke-width="3" marker-end="url(#ar3)"/>';
     svg += '<text x="' + pr[0] + '" y="14" text-anchor="middle" font-size="14" fill="#c53030" font-weight="bold">' + h(pr[1]) + '</text>';
@@ -612,6 +627,169 @@ function beamTwoPointAsymDiagram(opts) {
   svg += '</svg>';
   return svg;
 }
+/* ====================================================================
+ * 追加：荷重モデル図（Excelの「公式」シートの図に合わせた描画）
+ *   distLoadDiagram / triLoadDiagram / cantileverDiagram /
+ *   cantileverPartialDiagram / continuousDiagram
+ * ================================================================== */
+var _FG = {
+  defs: function (id) {
+    return '<defs><marker id="' + id + '" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#c53030"/></marker></defs>';
+  },
+  open: function () { return '<svg viewBox="0 0 620 176" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">'; },
+  beam: function (xa, xb) { return '<line x1="' + xa + '" y1="68" x2="' + xb + '" y2="68" stroke="#1f3a5f" stroke-width="6"/>'; },
+  pin: function (x) { return '<polygon points="' + x + ',68 ' + (x - 14) + ',96 ' + (x + 14) + ',96" fill="#1f3a5f"/>'; },
+  roller: function (x) { return _FG.pin(x) + '<circle cx="' + (x - 7) + '" cy="100" r="4.5" fill="#1f3a5f"/><circle cx="' + (x + 7) + '" cy="100" r="4.5" fill="#1f3a5f"/>'; },
+  wall: function (x) {
+    var s = '<line x1="' + x + '" y1="42" x2="' + x + '" y2="100" stroke="#1f3a5f" stroke-width="4"/>';
+    for (var y = 46; y < 100; y += 8) s += '<line x1="' + x + '" y1="' + (y + 8) + '" x2="' + (x + 12) + '" y2="' + y + '" stroke="#1f3a5f" stroke-width="1.5"/>';
+    return s;
+  },
+  txt: function (x, y, t, o) {
+    o = o || {};
+    return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-size="' + (o.size || 12) + '" fill="' + (o.fill || '#374151') + '"' + (o.bold ? ' font-weight="bold"' : '') + '>' + h(t) + '</text>';
+  },
+  letter: function (x, y, t) { return _FG.txt(x, y, t, {size: 13}); },
+  arrow: function (x, y0, id, w) {
+    return '<line x1="' + x + '" y1="' + y0 + '" x2="' + x + '" y2="68" stroke="#c53030" stroke-width="' + (w || 3) + '" marker-end="url(#' + id + ')"/>';
+  },
+  /* 寸法線（下側）。pts=節点x座標、labels=各区間の文字 */
+  dims: function (pts, labels) {
+    var s = '';
+    for (var i = 0; i < pts.length - 1; i++) {
+      s += '<line x1="' + pts[i] + '" y1="150" x2="' + pts[i + 1] + '" y2="150" stroke="#8996a3" stroke-width="1"/>';
+      s += _FG.txt((pts[i] + pts[i + 1]) / 2, 166, labels[i], {fill: '#4a5568'});
+    }
+    pts.forEach(function (p) { s += '<line x1="' + p + '" y1="145" x2="' + p + '" y2="155" stroke="#8996a3" stroke-width="1"/>'; });
+    return s;
+  },
+  xmark: function (xpos) {
+    return '<line x1="' + xpos + '" y1="68" x2="' + xpos + '" y2="90" stroke="#2b6cb0" stroke-width="2" stroke-dasharray="4,3"/>' +
+           '<text x="' + xpos + '" y="104" text-anchor="middle" font-size="12" fill="#2b6cb0">x</text>';
+  },
+  /* 分布荷重：xa〜xb、両端の高さ h1,h2（0〜1、最大50px） */
+  udl: function (xa, xb, h1, h2, id, label) {
+    var H = 46, n = Math.max(3, Math.round((xb - xa) / 22)), s = '', top = [];
+    for (var i = 0; i <= n; i++) {
+      var t = i / n, x = xa + (xb - xa) * t, hh = H * (h1 + (h2 - h1) * t), y = 68 - hh;
+      top.push(x + ',' + y);
+      if (hh > 6) s += _FG.arrow(x, y, id, 2);
+    }
+    s += '<polyline points="' + top.join(' ') + '" fill="none" stroke="#c53030" stroke-width="2"/>';
+    if (label) s += _FG.txt((xa + xb) / 2, 68 - H * Math.max(h1, h2) - 8, label, {fill: '#c53030', bold: true, size: 14});
+    return s;
+  }
+};
+
+/* 単純梁：等分布荷重（全長／一端部分／任意部分／台形） */
+function distLoadDiagram(opts) {
+  var x0 = 70, x1 = 550, W = x1 - x0;
+  var aF = Math.max(0, Math.min(1, opts.aFrac || 0)), bF = Math.max(aF, Math.min(1, opts.bFrac === undefined ? 1 : opts.bFrac));
+  var lbl = opts.loadLabel || 'w', trap = /→/.test(lbl);
+  var xa = x0 + W * aF, xb = x0 + W * bF;
+  var svg = _FG.open() + _FG.defs('arD');
+  svg += _FG.udl(xa, xb, trap ? 0.5 : 1, 1, 'arD', lbl);
+  if (opts.xFrac !== null && opts.xFrac !== undefined) svg += _FG.xmark(x0 + W * opts.xFrac);
+  svg += _FG.beam(x0, x1) + _FG.pin(x0) + _FG.roller(x1);
+  svg += _FG.txt(x0, 132, 'RA') + _FG.txt(x1, 132, 'RB');
+  var pts = [x0], labels = [];
+  if (aF > 0) { pts.push(xa); labels.push('a'); }
+  if (bF < 1) { pts.push(xb); labels.push(aF > 0 ? 'c' : 'a'); }
+  if (aF <= 0 && bF >= 1) { labels = ['L']; }
+  else if (aF <= 0) { labels.push('b'); }
+  else if (bF >= 1) { labels.push('c'); }
+  else { labels.push('b'); }
+  pts.push(x1);
+  if (pts.length - 1 !== labels.length) labels = labels.slice(0, pts.length - 1);
+  svg += _FG.dims(pts, labels) + '</svg>';
+  return svg;
+}
+
+/* 単純梁：三角形状等分布荷重（A端0、B端最大） */
+function triLoadDiagram(opts) {
+  var x0 = 70, x1 = 550, W = x1 - x0;
+  var svg = _FG.open() + _FG.defs('arT');
+  svg += _FG.udl(x0, x1, 0, 1, 'arT', 'w₀');
+  if (opts && opts.xFrac !== null && opts.xFrac !== undefined) svg += _FG.xmark(x0 + W * opts.xFrac);
+  svg += _FG.beam(x0, x1) + _FG.pin(x0) + _FG.roller(x1);
+  svg += _FG.txt(x0, 132, 'RA') + _FG.txt(x1, 132, 'RB');
+  svg += _FG.dims([x0, x1], ['L']) + '</svg>';
+  return svg;
+}
+
+/* 片持ち梁（左：自由端A、右：固定端B）／はね出し梁（opts.overhang） */
+function cantileverDiagram(opts) {
+  opts = opts || {};
+  var x0 = 70, x1 = 550, W = x1 - x0, lbl = opts.loadLabel || 'P';
+  var svg = _FG.open() + _FG.defs('arC');
+  var hasX = opts.xFrac !== null && opts.xFrac !== undefined;
+  if (opts.overhang) {
+    var xb = x0 + W * (opts.spanFrac || 0.75);
+    var ua = opts.udlAll ? x0 : xb;
+    if (opts.distLoad) svg += _FG.udl(ua, x1, 1, 1, 'arC', lbl);
+    else { svg += _FG.arrow(x1, 18, 'arC') + _FG.txt(x1, 14, lbl, {fill: '#c53030', bold: true, size: 14}); }
+    if (hasX) svg += _FG.xmark(x0 + (xb - x0) * opts.xFrac);
+    svg += _FG.beam(x0, x1) + _FG.pin(x0) + _FG.pin(xb);
+    svg += _FG.letter(x0 - 18, 62, 'A') + _FG.letter(xb + 4, 118, 'B') + _FG.letter(x1 + 12, 62, 'C');
+    svg += _FG.dims([x0, xb, x1], ['L', 'e']) + '</svg>';
+    return svg;
+  }
+  var lf = (opts.loadFrac === undefined) ? 1 : Math.max(0, Math.min(1, opts.loadFrac));
+  if (opts.distLoad) {
+    svg += _FG.udl(x0, x1, opts.tri ? 0 : 1, 1, 'arC', lbl);
+  } else {
+    var px = x1 - W * lf;
+    svg += _FG.arrow(px, 18, 'arC') + _FG.txt(px, 14, lbl, {fill: '#c53030', bold: true, size: 14});
+  }
+  if (hasX) svg += _FG.xmark(x0 + W * opts.xFrac);
+  svg += _FG.beam(x0, x1) + _FG.wall(x1);
+  svg += _FG.letter(x0 - 18, 62, 'A') + _FG.letter(x1 + 22, 62, 'B');
+  if (!opts.distLoad && lf < 1) { var p2 = x1 - W * lf; svg += _FG.dims([x0, p2, x1], ['b', 'a']); }
+  else svg += _FG.dims([x0, x1], ['L']);
+  return svg + '</svg>';
+}
+
+/* 片持ち梁：部分等分布荷重（a,bは自由端Aから測る） */
+function cantileverPartialDiagram(opts) {
+  var x0 = 70, x1 = 550, W = x1 - x0;
+  var aF = Math.max(0, Math.min(1, opts.aFrac || 0)), bF = Math.max(aF, Math.min(1, opts.bFrac === undefined ? 1 : opts.bFrac));
+  var xa = x0 + W * aF, xb = x0 + W * bF;
+  var svg = _FG.open() + _FG.defs('arP');
+  svg += _FG.udl(xa, xb, 1, 1, 'arP', opts.loadLabel || 'w');
+  if (opts.xFrac !== null && opts.xFrac !== undefined) svg += _FG.xmark(x0 + W * opts.xFrac);
+  svg += _FG.beam(x0, x1) + _FG.wall(x1);
+  svg += _FG.letter(x0 - 18, 62, 'A') + _FG.letter(x1 + 22, 62, 'B');
+  var pts = [x0], labels = [];
+  if (aF > 0) { pts.push(xa); labels.push('a'); }
+  if (bF < 1) { pts.push(xb); labels.push('b'); labels.push('c'); }
+  else { labels.push(aF > 0 ? 'b' : 'L'); }
+  pts.push(x1);
+  if (pts.length - 1 !== labels.length) labels = labels.slice(0, pts.length - 1);
+  return svg + _FG.dims(pts, labels) + '</svg>';
+}
+
+/* 連続梁（2〜3スパン）。loads: [{t:'pt'|'udl', span:0.. | 'all', frac:0.5, label:'P'}] */
+function continuousDiagram(opts) {
+  var n = opts.n || 2, x0 = 70, x1 = 550, W = (x1 - x0) / n;
+  var svg = _FG.open() + _FG.defs('arS');
+  (opts.loads || []).forEach(function (ld) {
+    var sa = ld.span === 'all' ? 0 : ld.span, sb = ld.span === 'all' ? n : ld.span + 1;
+    if (ld.t === 'udl') svg += _FG.udl(x0 + W * sa, x0 + W * sb, 1, 1, 'arS', ld.label || 'w');
+    else {
+      var px = x0 + W * (ld.span + (ld.frac === undefined ? 0.5 : ld.frac));
+      svg += _FG.arrow(px, 18, 'arS') + _FG.txt(px, 14, ld.label || 'P', {fill: '#c53030', bold: true, size: 14});
+    }
+  });
+  svg += _FG.beam(x0, x1);
+  var pts = [], labels = [], names = ['A', 'B', 'C', 'D'];
+  for (var i = 0; i <= n; i++) {
+    var x = x0 + W * i; pts.push(x);
+    svg += _FG.pin(x) + _FG.letter(x + (i === n ? 16 : -2), i === n ? 62 : 116, names[i]);
+    if (i < n) labels.push('L');
+  }
+  return svg + _FG.dims(pts, labels) + '</svg>';
+}
+
 function scanMaxAbs(fn, xStart, xEnd) {
   var xs = Math.round(xStart), xe = Math.round(xEnd);
   if (xe < xs) { var t = xs; xs = xe; xe = t; }
@@ -626,7 +804,7 @@ function miniDiagram(splitFrac, side, label) {
   var x0 = 20, x1 = 180;
   var xs = x0 + (x1 - x0) * splitFrac;
   var svg = '<svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" style="width:150px;height:auto;">';
-  svg += '<defs><marker id="armM" markerWidth="7" markerHeight="7" refX="3.5" refY="7" orient="auto"><path d="M0,0 L7,0 L3.5,7 z" fill="#c53030"/></marker></defs>';
+  svg += '<defs><marker id="armM" markerWidth="7" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#c53030"/></marker></defs>';
   svg += '<line x1="' + x0 + '" y1="30" x2="' + x1 + '" y2="30" stroke="#1f3a5f" stroke-width="4"/>';
   svg += '<polygon points="' + x0 + ',30 ' + (x0 - 10) + ',48 ' + (x0 + 10) + ',48" fill="#1f3a5f"/>';
   svg += '<polygon points="' + x1 + ',30 ' + (x1 - 10) + ',48 ' + (x1 + 10) + ',48" fill="#1f3a5f"/>';
@@ -3645,7 +3823,7 @@ CASES.C6={
     html+='<h2 class="bar">② '+h(r.prtName)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">支持長さL='+fnum(r.L,0)+'mm　w₀='+fnum(r.w,2)+'N/mm（固定端最大・自由端0）</div>';
     html+='<div class="lead">'+r.ZLabel+'='+fnum(r.Z)+'mm³　'+r.ILabel+'='+fnum(r.I)+'mm⁴　E='+fnum(r.E,0)+'N/mm²　F='+fnum(r.F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+cantileverDiagram({loadFrac:1,distLoad:true,loadLabel:'w₀'})+'<div class="diagram-label">荷重モデル：片持ち梁 ／ 三角形状等分布荷重（固定端最大・自由端0）</div></div>';
+    html+='<div class="diagram-wrap">'+cantileverDiagram({loadFrac:1,distLoad:true,tri:true,loadLabel:'w₀'})+'<div class="diagram-label">荷重モデル：片持ち梁 ／ 三角形状等分布荷重（固定端最大・自由端0）</div></div>';
     html+='<p class="expl">'+h(r.prtName)+'にかかる荷重状態を上図の様な三角形状等分布荷重と想定する。</p>';
     html+='<div class="sub-head">分布荷重w₀（固定端最大）</div>';
     html+='<div class="note-line">w₀ ＝ -----※分布荷重w₀の計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(r.w,2)+'N/mm（固定端）→ W ＝ w₀L/2 ＝ '+fnum(r.w*r.L/2,0)+'N</div>';
@@ -3773,7 +3951,7 @@ CASES.O1={
     html+='<h2 class="bar">② '+h(r.prtName)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">支持スパンL='+fnum(r.L,0)+'mm　はね出しe='+fnum(r.e,0)+'mm　P='+fnum(r.P,0)+'N</div>';
     html+='<div class="lead">'+r.ZLabel+'='+fnum(r.Z)+'mm³　'+r.ILabel+'='+fnum(r.I)+'mm⁴　E='+fnum(r.E,0)+'N/mm²　F='+fnum(r.F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+cantileverDiagram({loadFrac:1,loadLabel:'P'})+'<div class="diagram-label">荷重モデル：はね出し梁 ／ 先端集中荷重（スパンL＋はね出しe）</div></div>';
+    html+='<div class="diagram-wrap">'+cantileverDiagram({overhang:true,loadLabel:'P'})+'<div class="diagram-label">荷重モデル：はね出し梁 ／ 先端集中荷重（スパンL＋はね出しe）</div></div>';
     html+='<p class="expl">'+h(r.prtName)+'にかかる荷重状態を上図の様なはね出し梁先端集中荷重と想定する。</p>';
     html+='<div class="sub-head">集中荷重P</div>';
     html+='<div class="note-line">P ＝ -----※荷重Pの計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(r.P,0)+'N</div>';
@@ -3894,7 +4072,7 @@ CASES.O2={
     html+='<h2 class="bar">② '+h(r.prtName)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">支持スパンL='+fnum(r.L,0)+'mm　はね出しe='+fnum(r.e,0)+'mm　w='+fnum(r.w,2)+'N/mm</div>';
     html+='<div class="lead">'+r.ZLabel+'='+fnum(r.Z)+'mm³　'+r.ILabel+'='+fnum(r.I)+'mm⁴　E='+fnum(r.E,0)+'N/mm²　F='+fnum(r.F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+distLoadDiagram({aFrac:0,bFrac:1,loadLabel:'w'})+'<div class="diagram-label">荷重モデル：はね出し梁 ／ 全体等分布荷重（L+e区間）</div></div>';
+    html+='<div class="diagram-wrap">'+cantileverDiagram({overhang:true,distLoad:true,udlAll:true,loadLabel:'w'})+'<div class="diagram-label">荷重モデル：はね出し梁 ／ 全体等分布荷重（L+e区間）</div></div>';
     html+='<p class="expl">'+h(r.prtName)+'にかかる荷重状態を上図の様な全体等分布荷重と想定する。</p>';
     html+='<div class="sub-head">分布荷重w</div>';
     html+='<div class="note-line">w ＝ -----※分布荷重wの計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(r.w,2)+'N/mm</div>';
@@ -3987,7 +4165,7 @@ CASES.O3={
     html+='<h2 class="bar">② '+h(r.prtName)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">支持スパンL='+fnum(r.L,0)+'mm　はね出しe='+fnum(r.e,0)+'mm　w='+fnum(r.w,2)+'N/mm</div>';
     html+='<div class="lead">'+r.ZLabel+'='+fnum(r.Z)+'mm³　'+r.ILabel+'='+fnum(r.I)+'mm⁴　E='+fnum(r.E,0)+'N/mm²　F='+fnum(r.F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+cantileverDiagram({loadFrac:1,distLoad:true,loadLabel:'w（はね出し部）'})+'<div class="diagram-label">荷重モデル：はね出し梁 ／ はね出し部等分布荷重</div></div>';
+    html+='<div class="diagram-wrap">'+cantileverDiagram({overhang:true,distLoad:true,loadLabel:'w（はね出し部）'})+'<div class="diagram-label">荷重モデル：はね出し梁 ／ はね出し部等分布荷重</div></div>';
     html+='<p class="expl">'+h(r.prtName)+'にかかる荷重状態を上図の様なはね出し部のみの等分布荷重と想定する。</p>';
     html+='<div class="sub-head">分布荷重w・合力W</div>';
     html+='<div class="note-line">w ＝ -----※分布荷重wの計算を検討条件に合わせて記述-----</div>';
@@ -4081,7 +4259,7 @@ CASES['2S1']={
     html+='<h2 class="bar">② '+h(r.prtName)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">スパンL='+fnum(r.L,0)+'mm×2等スパン　P='+fnum(r.P,0)+'N（第1スパン中央）</div>';
     html+='<div class="lead">'+r.ZLabel+'='+fnum(r.Z)+'mm³　'+r.ILabel+'='+fnum(r.I)+'mm⁴　E='+fnum(r.E,0)+'N/mm²　F='+fnum(r.F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+distLoadDiagram({aFrac:0,bFrac:1,loadLabel:'P（第1スパン中央）'})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 第1スパン中央集中荷重</div></div>';
+    html+='<div class="diagram-wrap">'+continuousDiagram({n:2,loads:[{t:'pt',span:0,frac:0.5,label:'P'}]})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 第1スパン中央集中荷重</div></div>';
     html+='<p class="expl">'+h(r.prtName)+'にかかる荷重状態を等スパン2連続梁の第1スパン中央集中荷重と想定する（3点モーメント法）。</p>';
     html+='<div class="sub-head">集中荷重P</div>';
     html+='<div class="note-line">P ＝ -----※荷重Pの計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(r.P,0)+'N</div>';
@@ -4171,7 +4349,7 @@ CASES['2S2']={
     html+='<h2 class="bar">② '+h(r.prtName)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">スパンL='+fnum(r.L,0)+'mm×2等スパン　w='+fnum(r.w,2)+'N/mm（全体）</div>';
     html+='<div class="lead">'+r.ZLabel+'='+fnum(r.Z)+'mm³　'+r.ILabel+'='+fnum(r.I)+'mm⁴　E='+fnum(r.E,0)+'N/mm²　F='+fnum(r.F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+distLoadDiagram({aFrac:0,bFrac:1,loadLabel:'w'})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 全体等分布荷重</div></div>';
+    html+='<div class="diagram-wrap">'+continuousDiagram({n:2,loads:[{t:'udl',span:'all',label:'w'}]})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 全体等分布荷重</div></div>';
     html+='<p class="expl">'+h(r.prtName)+'にかかる荷重状態を等スパン2連続梁の全体等分布荷重と想定する。</p>';
     html+='<div class="sub-head">分布荷重w</div>';
     html+='<div class="note-line">w ＝ -----※分布荷重wの計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(r.w,2)+'N/mm</div>';
@@ -4261,7 +4439,7 @@ make2SCase('2S3','連続梁（2スパン）第1スパン等分布荷重',
     var html='<h2 class="bar">② '+h(m.label)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">スパンL='+fnum(L,0)+'mm×2等スパン　w='+fnum(w,2)+'N/mm（第1スパンのみ）</div>';
     html+='<div class="lead">'+ZLabel+'='+fnum(Z)+'mm³　'+ILabel+'='+fnum(I)+'mm⁴　E='+fnum(E,0)+'N/mm²　F='+fnum(F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+distLoadDiagram({aFrac:0,bFrac:0.5,loadLabel:'w'})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 第1スパン等分布荷重</div></div>';
+    html+='<div class="diagram-wrap">'+continuousDiagram({n:2,loads:[{t:'udl',span:0,label:'w'}]})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 第1スパン等分布荷重</div></div>';
     html+='<p class="expl">'+h(m.label)+'にかかる荷重状態を等スパン2連続梁の第1スパン等分布荷重と想定する。</p>';
     html+='<div class="sub-head">分布荷重w</div><div class="note-line">w ＝ -----※分布荷重wの計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(w,2)+'N/mm</div>';
     html+='<div class="sub-head">反力 R1・R2・R3</div>';
@@ -4323,7 +4501,7 @@ make2SCase('2S4','連続梁（2スパン）各スパン中央集中荷重',
     var html='<h2 class="bar">② '+h(m.label)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">スパンL='+fnum(L,0)+'mm×2等スパン　P='+fnum(P,0)+'N×各スパン中央</div>';
     html+='<div class="lead">'+ZLabel+'='+fnum(Z)+'mm³　'+ILabel+'='+fnum(I)+'mm⁴　E='+fnum(E,0)+'N/mm²　F='+fnum(F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+beamTwoPointSymDiagram({aFrac:0.25,xFrac:null})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 各スパン中央集中荷重</div></div>';
+    html+='<div class="diagram-wrap">'+continuousDiagram({n:2,loads:[{t:'pt',span:0,frac:0.5,label:'P'},{t:'pt',span:1,frac:0.5,label:'P'}]})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 各スパン中央集中荷重</div></div>';
     html+='<p class="expl">'+h(m.label)+'にかかる荷重状態を等スパン2連続梁の各スパン中央集中荷重（対称荷重）と想定する。</p>';
     html+='<div class="sub-head">集中荷重P</div><div class="note-line">P ＝ -----※荷重Pの計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(P,0)+'N</div>';
     html+='<div class="sub-head">反力 R1・R2・R3（対称）</div>';
@@ -4384,7 +4562,7 @@ make2SCase('2S5','連続梁（2スパン）第2スパン等分布荷重',
     var html='<h2 class="bar">② '+h(m.label)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">スパンL='+fnum(L,0)+'mm×2等スパン　w='+fnum(w,2)+'N/mm（第2スパンのみ）</div>';
     html+='<div class="lead">'+ZLabel+'='+fnum(Z)+'mm³　'+ILabel+'='+fnum(I)+'mm⁴　E='+fnum(E,0)+'N/mm²　F='+fnum(F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+distLoadDiagram({aFrac:0.5,bFrac:1,loadLabel:'w'})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 第2スパン等分布荷重</div></div>';
+    html+='<div class="diagram-wrap">'+continuousDiagram({n:2,loads:[{t:'udl',span:1,label:'w'}]})+'<div class="diagram-label">荷重モデル：連続梁（2スパン） ／ 第2スパン等分布荷重</div></div>';
     html+='<p class="expl">'+h(m.label)+'にかかる荷重状態を等スパン2連続梁の第2スパン等分布荷重と想定する（2S3の鏡像）。</p>';
     html+='<div class="sub-head">分布荷重w</div><div class="note-line">w ＝ -----※分布荷重wの計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(w,2)+'N/mm</div>';
     html+='<div class="sub-head">反力 R1・R2・R3</div>';
@@ -4439,7 +4617,7 @@ make2SCase('2S6','連続梁（3スパン）全体等分布荷重',
     var html='<h2 class="bar">② '+h(m.label)+' の強度計算</h2><div class="sheet"><div class="cols"><div class="left">';
     html+='<div class="lead">スパンL='+fnum(L,0)+'mm×3等スパン　w='+fnum(w,2)+'N/mm（全体）</div>';
     html+='<div class="lead">'+ZLabel+'='+fnum(Z)+'mm³　'+ILabel+'='+fnum(I)+'mm⁴　E='+fnum(E,0)+'N/mm²　F='+fnum(F,0)+'N/mm²</div>';
-    html+='<div class="diagram-wrap">'+distLoadDiagram({aFrac:0,bFrac:1,loadLabel:'w'})+'<div class="diagram-label">荷重モデル：連続梁（3スパン） ／ 全体等分布荷重</div></div>';
+    html+='<div class="diagram-wrap">'+continuousDiagram({n:3,loads:[{t:'udl',span:'all',label:'w'}]})+'<div class="diagram-label">荷重モデル：連続梁（3スパン） ／ 全体等分布荷重</div></div>';
     html+='<p class="expl">'+h(m.label)+'にかかる荷重状態を等スパン3連続梁の全体等分布荷重と想定する。</p>';
     html+='<div class="sub-head">分布荷重w</div><div class="note-line">w ＝ -----※分布荷重wの計算を検討条件に合わせて記述-----</div><div class="calc-line">　＝ '+fnum(w,2)+'N/mm</div>';
     html+='<div class="sub-head">反力 R1〜R4</div>';
@@ -4500,7 +4678,7 @@ CASES.B1={
       '<div class="btnbar"><button type="button" class="btn" onclick="CASES.B1.run()">計 算 す る</button></div></div></form>'+
       '<div id="results"></div>'+
       '<div class="note">※ この頁は元Excelの「B1」シートに対応します。各種断面の断面二次モーメント・断面係数等を計算します。</div>';
-    document.getElementById('caseFields').innerHTML='';
+    var _cf=document.getElementById('caseFields'); if(_cf) _cf.innerHTML='';
     this.updateFields();
   },
   updateFields:function(){
@@ -4830,7 +5008,7 @@ CASES.P5={
       '<div class="btnbar"><button type="button" class="btn" onclick="CASES.P5.run()">計 算 す る</button></div>'+
       '</div></form><div id="results"></div>'+
       '<div class="note">※ この頁は元Excelの「P5」シートに対応します。ボルト接合（せん断・引張）またはすみ肉溶接の接合部強度を検討します。</div>';
-    document.getElementById('caseFields').innerHTML='';
+    var _cf=document.getElementById('caseFields'); if(_cf) _cf.innerHTML='';
     this.updateFields();
   },
   updateFields:function(){
@@ -4947,7 +5125,7 @@ CASES.BR1={
       '<div class="btnbar"><button type="button" class="btn" onclick="CASES.BR1.run()">計 算 す る</button></div>'+
       '</div></form><div id="results"></div>'+
       '<div class="note">※ この頁は元Excelの「BR1」シートに対応します。片持ちプレート（ブラケット）の曲げ応力・せん断応力・等価応力を同時に検討します。</div>';
-    document.getElementById('caseFields').innerHTML='';
+    var _cf=document.getElementById('caseFields'); if(_cf) _cf.innerHTML='';
     this.run();
   },
   run:function(){
@@ -5239,6 +5417,34 @@ CASES.WD={
   }
 };
 
+
+/* ---- 図（.diagram-wrap）を全ページ共通で、タイトル（h1.pageTitle）直下にまとめる ---- */
+(function(){
+  function place(){
+    var main = document.getElementById('main'), res = document.getElementById('results');
+    if(!main || !res) return;
+    var list = Array.prototype.filter.call(res.querySelectorAll('.diagram-wrap'), function(w){
+      return !w.classList.contains('fig-added') && !w.classList.contains('fig-ins');
+    });
+    if(!list.length) return;
+    var slot = document.getElementById('figSlot');
+    if(!slot){
+      slot = document.createElement('div'); slot.id = 'figSlot';
+      var t = main.querySelector('h1.pageTitle');
+      if(t) t.parentNode.insertBefore(slot, t.nextSibling); else main.insertBefore(slot, main.firstChild);
+    }else{
+      slot.innerHTML = '';   // 再計算で図が作り直されたので、古い図を片付ける
+    }
+    list.forEach(function(w){
+      var nx = w.nextElementSibling, extra = [];
+      while(nx && nx.classList.contains('fig-added')){ extra.push(nx); nx = nx.nextElementSibling; }
+      slot.appendChild(w);
+      extra.forEach(function(e){ slot.appendChild(e); });
+    });
+  }
+  new MutationObserver(place).observe(document.getElementById('main'), {childList:true, subtree:true});
+  place();
+})();
 </script>
 
 <!-- 編集モードFABボタン -->
@@ -5261,7 +5467,8 @@ function _editCore(){
   function kids(p){
     return Array.prototype.filter.call(p.children, function(c){
       return !UI[c.id] && c.tagName !== 'SCRIPT' && !(c.classList &&
-        (c.classList.contains('fig-tools') || c.classList.contains('fig-img') || c.classList.contains('fig-added')));
+        (c.classList.contains('fig-tools') || c.classList.contains('fig-img') || c.classList.contains('fig-added') ||
+         c.classList.contains('fig-ins') || c.classList.contains('fig-gap')));
     });
   }
   /* 直近のid付き祖先（無ければBODY）からの位置パス */
@@ -5318,7 +5525,7 @@ function _editCore(){
   function applyFig(r, force){
     if(r.c && r.c !== (window.currentId || '')) return;
     var el = resolve(r.s);
-    if(!el || !el.classList || !el.classList.contains('diagram-wrap') || el.classList.contains('fig-added')) return;
+    if(!el || !el.classList || !el.classList.contains('diagram-wrap') || el.classList.contains('fig-added') || el.classList.contains('fig-ins')) return;
     var sg = figSig(r);
     if(!force && el.getAttribute('data-fig') === sg) return;
     // 前回の差し替え画像・追加図を片付ける
@@ -5341,8 +5548,31 @@ function _editCore(){
     });
     el.setAttribute('data-fig', sg);
   }
+  /* ---- 任意位置に挿入した図（t:'ins'）。基準の要素の前／後ろに置く ---- */
+  function key(el){
+    var c = (typeof el.className === 'string' ? el.className : '').split(/\s+/)[0] || '';
+    return el.tagName + '.' + c;
+  }
+  function applyIns(r){
+    if(r.c && r.c !== (window.currentId || '')) return;
+    if(document.querySelector('[data-ins="' + r.id + '"]')) return;
+    var el = resolve(r.s);
+    if(!el || !el.parentNode || (r.k && r.k !== key(el))) return;
+    var w = document.createElement('div');
+    w.className = 'diagram-wrap fig-ins';
+    w.setAttribute('data-ins', r.id);
+    w.appendChild(mkImg(r.src));
+    if(r.pos === 'before'){
+      el.parentNode.insertBefore(w, el);
+    }else{
+      var ref = el;
+      while(ref.nextElementSibling && ref.nextElementSibling.classList.contains('fig-ins')) ref = ref.nextElementSibling;
+      ref.parentNode.insertBefore(w, ref.nextSibling);
+    }
+  }
   function applyAll(rules){
     rules.forEach(function(r){
+      if(r.t === 'ins'){ applyIns(r); return; }
       if(r.t === 'fig'){ applyFig(r); return; }
       if(r.c && r.c !== (window.currentId || '')) return;
       var el = resolve(r.s);
@@ -5353,7 +5583,7 @@ function _editCore(){
   function merge(list){
     var seen = {}, out = [];
     list.forEach(function(r){
-      var k = r.t === 'fig' ? 'fig|' + r.c + '|' + r.s : r.c + '|' + r.s + '|' + JSON.stringify(r.o);
+      var k = r.t === 'ins' ? 'ins|' + r.id : r.t === 'fig' ? 'fig|' + r.c + '|' + r.s : r.c + '|' + r.s + '|' + JSON.stringify(r.o);
       if(!seen[k]){ seen[k] = 1; out.push(r); }
     });
     return out;
@@ -5389,7 +5619,7 @@ function _editCore(){
       }).catch(function(){});
     }
   }
-  return {sig:sig, scope:scope, texts:texts, same:same, install:install, fetchServer:fetchServer, canon:canon, api:API, applyFig:applyFig};
+  return {sig:sig, scope:scope, texts:texts, same:same, install:install, fetchServer:fetchServer, canon:canon, api:API, applyFig:applyFig, applyIns:applyIns, key:key};
 }
 
 /* 保存先：github.io で開いたときは GitHub、それ以外は PHP（edits.php）。独自ドメインで GitHub Pages を使う場合は 'github' に書き換える */
@@ -5444,6 +5674,7 @@ function makeEditable(root){
   all.forEach(function(el){
     if(SKIP_TAGS[el.tagName]) return;
     if(SKIP_IDS[el.id]) return;
+    if(el.closest && el.closest('.fig-gap')) return;
     if(el.closest && (el.closest('#editBanner')||el.closest('#editFab')||el.closest('#editToast'))) return;
     var hasText = Array.from(el.childNodes).some(function(n){
       return n.nodeType===3 && n.textContent.trim().length>0;
@@ -5533,7 +5764,9 @@ function attachFigTools(root, force){
     if(old) w.removeChild(old);
     var bar = document.createElement('div');
     bar.className = 'fig-tools'; bar.setAttribute('contenteditable', 'false');
-    if(w.classList.contains('fig-added')){
+    if(w.classList.contains('fig-ins')){
+      bar.appendChild(figBtn('🗑 この図を削除', 'danger', function(){ insRemove(w.getAttribute('data-ins')); }));
+    }else if(w.classList.contains('fig-added')){
       bar.appendChild(figBtn('🗑 この図を削除', 'danger', function(){
         var o = figRule(w); o.rule.adds.splice(o.addIndex, 1); figCommit(o.rule);
       }));
@@ -5556,6 +5789,71 @@ function attachFigTools(root, force){
   });
 }
 
+/* ---- 図を好きな位置に挿入 ---- */
+function insCommit(rule){
+  var list = window.__EDIT_RULES__ = (window.__EDIT_RULES__ || []).slice();
+  list.push(rule);
+  _core.applyIns(rule);
+  attachFigTools(document.body, true);
+}
+function insRemove(id){
+  window.__EDIT_RULES__ = (window.__EDIT_RULES__ || []).filter(function(r){ return !(r.t === 'ins' && r.id === id); });
+  var n = document.querySelector('[data-ins="' + id + '"]');
+  if(n && n.parentNode) n.parentNode.removeChild(n);
+}
+function _isInsContainer(p){
+  if(p.id === 'main' || p.id === 'results' || p.id === 'figSlot' || p.tagName === 'FORM') return true;
+  var c = p.classList;
+  if(c.contains('sheet') || c.contains('left') || c.contains('right')) return true;
+  var pp = p.parentNode;
+  return !!(pp && pp.classList && (pp.classList.contains('grid2') || pp.classList.contains('splitcols')));
+}
+function clearGaps(){
+  document.querySelectorAll('.fig-gap').forEach(function(g){ g.parentNode.removeChild(g); });
+  var b = document.getElementById('btnInsFig');
+  if(b){ b.classList.remove('on'); b.textContent = '🖼 図を挿入'; }
+}
+function toggleInsertMode(){
+  if(!editOn) return;
+  if(document.querySelector('.fig-gap')){ clearGaps(); return; }
+  var main = document.getElementById('main'); if(!main) return;
+  var conts = [main].concat(Array.prototype.slice.call(main.querySelectorAll('*'))).filter(_isInsContainer);
+  var n = 0;
+  conts.forEach(function(p){
+    var kids = Array.prototype.filter.call(p.children, function(c){
+      var cl = c.classList;
+      if(c.tagName === 'SCRIPT' || c.tagName === 'STYLE' || c.tagName === 'INPUT') return false;
+      if(cl.contains('fig-tools') || cl.contains('fig-ins') || cl.contains('fig-added') || cl.contains('fig-gap')) return false;
+      return getComputedStyle(c).display !== 'none';
+    });
+    kids.forEach(function(c, i){
+      if(i === 0) mkGap(c, 'before');
+      mkGap(c, 'after');
+      n++;
+    });
+  });
+  var b = document.getElementById('btnInsFig');
+  if(b){ b.classList.add('on'); b.textContent = '✕ 位置選択をやめる'; }
+  toast('図を入れたい場所の「＋ ここに図を挿入」をタップしてください（' + n + ' 箇所）', 5000);
+}
+function mkGap(anchor, pos){
+  var g = document.createElement('button');
+  g.type = 'button'; g.className = 'fig-gap'; g.textContent = '＋ ここに図を挿入';
+  g.setAttribute('contenteditable', 'false');
+  g.onclick = function(e){
+    e.preventDefault(); e.stopPropagation();
+    pickImage(function(src){
+      if(!anchor.isConnected){ toast('画面が更新されたため挿入できませんでした。もう一度お試しください', 5000); return; }
+      clearGaps();
+      insCommit({t:'ins', id:'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        s:_core.sig(anchor), c:_core.scope(anchor), pos:pos, k:_core.key(anchor), src:src});
+      toast('図を挿入しました 🖼');
+    });
+  };
+  if(pos === 'before') anchor.parentNode.insertBefore(g, anchor);
+  else anchor.parentNode.insertBefore(g, anchor.nextSibling);
+}
+
 /* ---- キャンセル ---- */
 function cancelEdit(){
   document.body.innerHTML = _origHTML;
@@ -5575,6 +5873,7 @@ function rebindUI(){
 
 function exitState(){
   editOn = false;
+  clearGaps();
   document.body.classList.remove('edit-on');
   var banner = document.getElementById('editBanner');
   if(banner) banner.classList.remove('on');
@@ -5595,7 +5894,7 @@ function collectRules(){
   }
   document.querySelectorAll('[data-ce]').forEach(commit);
   var rules = (window.__EDIT_RULES__ || []).map(function(r){
-    return r.t === 'fig' ? JSON.parse(JSON.stringify(r)) : {s:r.s, c:r.c, o:r.o.slice(), n:r.n.slice()};
+    return r.t ? JSON.parse(JSON.stringify(r)) : {s:r.s, c:r.c, o:r.o.slice(), n:r.n.slice()};
   });
   Object.keys(_rules).forEach(function(k){
     var r = _rules[k], hit = null;
@@ -5603,6 +5902,7 @@ function collectRules(){
     if(hit) hit.n = r.n; else rules.push({s:r.s, c:r.c, o:r.o, n:r.n});
   });
   return rules.filter(function(r){
+    if(r.t === 'ins') return !!r.src;
     if(r.t === 'fig') return r.mode !== 'orig' || (r.adds && r.adds.length);   // 元の図のままで追加も無ければ記録不要
     return !_core.same(r.o, r.n);
   });
@@ -5615,7 +5915,7 @@ function buildHTML(rules){
   ['edit-data','edit-patch'].forEach(function(id){
     var o = root.querySelector('#'+id); if(o) o.parentNode.removeChild(o);
   });
-  root.querySelectorAll('.fig-tools').forEach(function(e){ e.parentNode.removeChild(e); });
+  root.querySelectorAll('.fig-tools, .fig-gap').forEach(function(e){ e.parentNode.removeChild(e); });
   root.querySelectorAll('[contenteditable]').forEach(function(e){ e.removeAttribute('contenteditable'); });
   root.querySelectorAll('[data-ce]').forEach(function(e){ e.removeAttribute('data-ce'); });
   body.classList.remove('edit-on');
